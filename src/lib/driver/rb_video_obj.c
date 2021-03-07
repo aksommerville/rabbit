@@ -25,8 +25,8 @@ struct rb_video *rb_video_new(
   
   if (delegate) {
     video->delegate=*delegate;
-    video->winw=delegate->winw;
-    video->winh=delegate->winh;
+    if ((video->winw=delegate->winw)<1) video->winw=RB_FB_W*2;
+    if ((video->winh=delegate->winh)<1) video->winh=RB_FB_H*2;
     video->fullscreen=delegate->fullscreen;
   } else {
     video->winw=RB_FB_W*2;

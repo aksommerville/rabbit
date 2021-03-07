@@ -1,6 +1,23 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_image.h"
 
+/* Blit to framebuffer with adjustment.
+ */
+ 
+int rb_framebuffer_blit_safe(
+  struct rb_framebuffer *dst,int dstx,int dsty,
+  const struct rb_image *src,int srcx,int srcy,
+  int w,int h,
+  uint8_t xform,
+  uint32_t (*blend)(uint32_t dst,uint32_t src,void *userdata),
+  void *userdata
+) {
+  if (rb_framebuffer_check_bounds(dst,&dstx,&dsty,src,&srcx,&srcy,&w,&h,xform)>0) {
+    rb_framebuffer_blit_unchecked(dst,dstx,dsty,src,srcx,srcy,w,h,xform,blend,userdata);
+  }
+  return 0;
+}
+
 /* Blit to framebuffer.
  */
  
@@ -69,7 +86,7 @@ void rb_framebuffer_blit_unchecked(
     case RB_XFORM_SWAP|RB_XFORM_XREV: {
         srcp+=w-1;
         dsrcminor=src->w;
-        dsrcmajor=(src->w*h)-1;
+        dsrcmajor=-(src->w*h)-1;
       } break;
     case RB_XFORM_SWAP|RB_XFORM_YREV: {
         srcp+=src->w*(h-1);
@@ -111,9 +128,9 @@ void rb_framebuffer_blit_unchecked(
           *dstp=*srcp;
         } else {
           uint8_t dsta=0xff-a;
-          uint8_t r=(((*dstp)>>16)*dsta+((*srcp)>>16)*a)>>8;
-          uint8_t g=(((*dstp)>>8)*dsta+((*srcp)>>8)*a)>>8;
-          uint8_t b=((*dstp)*dsta+(*srcp)*a)>>8;
+          uint8_t r=((((*dstp)>>16)&0xff)*dsta+(((*srcp)>>16)&0xff)*a)>>8;
+          uint8_t g=((((*dstp)>>8)&0xff)*dsta+(((*srcp)>>8)&0xff)*a)>>8;
+          uint8_t b=(((*dstp)&0xff)*dsta+((*srcp)&0xff)*a)>>8;
           *dstp=(r<<16)|(g<<8)|b;
         }
       }) break;
@@ -207,7 +224,7 @@ int rb_framebuffer_check_bounds(
   if (*dsty<0) {
     if (xform&RB_XFORM_SWAP) {
       (*w)+=*dsty;
-      if (!(xform&RB_XFORM_XREV)) (*srcx)-=*dstx;
+      if (!(xform&RB_XFORM_XREV)) (*srcx)-=*dsty;
     } else {
       (*h)+=*dsty;
       if (!(xform&RB_XFORM_YREV)) (*srcy)-=*dsty;
@@ -241,7 +258,7 @@ int rb_framebuffer_check_bounds(
       *h=RB_FB_W-*dstx;
     }
     if (*dsty>RB_FB_H-*w) {
-      if (xform&RB_XFORM_XREV) (*srcy)+=(*dsty)+(*w)-RB_FB_H;
+      if (xform&RB_XFORM_XREV) (*srcx)+=(*dsty)+(*w)-RB_FB_H;
       *w=RB_FB_H-*dsty;
     }
   } else {

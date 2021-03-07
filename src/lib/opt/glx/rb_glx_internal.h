@@ -10,6 +10,7 @@
 #include <X11/Xatom.h>
 #include <X11/XKBlib.h>
 #define GL_GLEXT_PROTOTYPES 1
+#define GLX_GLXEXT_PROTOTYPES 1
 #include <GL/glx.h>
 
 #define KeyRepeat (LASTEvent+2)
@@ -36,6 +37,7 @@ struct rb_video_glx {
   int screensaver_inhibited;
   int focus;
   
+  GLuint texid;
 };
 
 #define VIDEO ((struct rb_video_glx*)video)

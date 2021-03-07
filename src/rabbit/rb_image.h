@@ -21,6 +21,7 @@
 
 #define RB_FB_W 256
 #define RB_FB_H 144
+#define RB_FB_SIZE_BYTES (RB_FB_W*RB_FB_H*4)
 
 struct rb_framebuffer {
   uint32_t v[RB_FB_W*RB_FB_H];
@@ -60,6 +61,15 @@ int rb_image_ref(struct rb_image *image);
  * For COLORKEY and DISCRETE images, we only call for pixels we think generically are opaque.
  */
 int rb_framebuffer_blit(
+  struct rb_framebuffer *dst,int dstx,int dsty,
+  const struct rb_image *src,int srcx,int srcy,
+  int w,int h,
+  uint8_t xform,
+  uint32_t (*blend)(uint32_t dst,uint32_t src,void *userdata),
+  void *userdata
+);
+
+int rb_framebuffer_blit_safe(
   struct rb_framebuffer *dst,int dstx,int dsty,
   const struct rb_image *src,int srcx,int srcy,
   int w,int h,

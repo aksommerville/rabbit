@@ -116,10 +116,16 @@ static int _rb_glx_init(struct rb_video *video) {
     return -1;
   }
   
-  glEnable(GL_POINT_SPRITE);
-  glEnable(GL_PROGRAM_POINT_SIZE);
-  glEnable(GL_BLEND);
+  glDisable(GL_BLEND);
   glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,GL_ONE);
+  
+  glEnable(GL_TEXTURE_2D);
+  glGenTextures(1,&VIDEO->texid);
+  glBindTexture(GL_TEXTURE_2D,VIDEO->texid);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
   return 0;
 }
@@ -128,6 +134,9 @@ static int _rb_glx_init(struct rb_video *video) {
  */
 
 static void _rb_glx_del(struct rb_video *video) {
+  if (VIDEO->texid) {
+    glDeleteTextures(1,&VIDEO->texid);
+  }
   if (VIDEO->ctx) {
     glXMakeCurrent(VIDEO->dpy,0,0);
     glXDestroyContext(VIDEO->dpy,VIDEO->ctx);
@@ -142,7 +151,16 @@ static void _rb_glx_del(struct rb_video *video) {
 
 static int _rb_glx_swap(struct rb_video *video,struct rb_framebuffer *fb) {
 
-  //TODO copy fb to window
+  glViewport(0,0,video->winw,video->winh);
+  //TODO use projection matrix to set output box -- preserve fb's aspect ratio
+
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,RB_FB_W,RB_FB_H,0,GL_BGRA,GL_UNSIGNED_BYTE,fb->v);
+  glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2i(0,1); glVertex2i(-1,-1);
+    glTexCoord2i(0,0); glVertex2i(-1, 1);
+    glTexCoord2i(1,1); glVertex2i( 1,-1);
+    glTexCoord2i(1,0); glVertex2i( 1, 1);
+  glEnd();
 
   glXSwapBuffers(VIDEO->dpy,VIDEO->win);
   VIDEO->screensaver_inhibited=0;
