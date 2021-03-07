@@ -12,6 +12,7 @@ static volatile int rb_sigc=0;
 static volatile int rb_terminate=0;
 struct rb_video *rb_demo_video=0;
 struct rb_framebuffer rb_demo_fb={0};
+struct rb_audio *rb_demo_audio=0;
 int rb_demo_mousex=0;
 int rb_demo_mousey=0;
 static double rb_demo_starttime=0.0;
@@ -44,6 +45,11 @@ static void rb_rcvsig(int sigid) {
 static void rb_demo_quit(int status) {
 
   double endtime=rb_demo_now();
+  
+  if (rb_demo_audio) {
+    rb_audio_del(rb_demo_audio);
+    rb_demo_audio=0;
+  }
 
   rb_demo->quit();
   
@@ -89,6 +95,14 @@ static int rb_demo_cb_mbutton(struct rb_video *video,int btnid,int value) {
   return 0;
 }
 
+/* Audio callback. 
+ */
+ 
+static int rb_demo_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
+  memset(v,0,c<<1);
+  return 0;
+}
+
 /* Initialize.
  */
  
@@ -103,6 +117,18 @@ static int rb_demo_init() {
     };
     if (!(rb_demo_video=rb_video_new(0,&delegate))) {
       fprintf(stderr,"Failed to initialize default video driver.\n");
+      return -1;
+    }
+  }
+  
+  if (rb_demo->use_audio) {
+    struct rb_audio_delegate delegate={
+      .rate=44100,
+      .chanc=2,
+      .cb_pcm_out=rb_demo_cb_pcm_out,
+    };
+    if (!(rb_demo_audio=rb_audio_new(0,&delegate))) {
+      fprintf(stderr,"Failed to initialize default audio driver.\n");
       return -1;
     }
   }
@@ -129,6 +155,13 @@ static int rb_demo_main() {
       return -1;
     }
     if (!err) return 0;
+    
+    if (rb_demo_audio) {
+      if (rb_audio_update(rb_demo_audio)<0) {
+        fprintf(stderr,"Update audio driver '%s' failed\n",rb_demo_audio->type->name);
+        return -1;
+      }
+    }
     
     if (rb_demo_video) {
       if (rb_video_update(rb_demo_video)<0) {

@@ -4,7 +4,7 @@ PRECMD=echo "  $(@F)" ; mkdir -p $(@D) ;
 
 CC:=gcc -c -MMD -O2 -Isrc -Werror -Wimplicit
 LD:=gcc
-LDPOST:=-lX11 -lGLX -lGL -lm
+LDPOST:=-lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lpthread
 AR:=ar rc
 
 CFILES:=$(shell find src -name '*.c')

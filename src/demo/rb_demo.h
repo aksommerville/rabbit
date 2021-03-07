@@ -3,6 +3,7 @@
 
 #include "rabbit/rabbit.h"
 #include "rabbit/rb_video.h"
+#include "rabbit/rb_audio.h"
 #include "rabbit/rb_image.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +18,10 @@
 /* Define these things before including this header, if you don't want the defaults.
  */
 #ifndef RB_DEMO_USE_VIDEO
-  #define RB_DEMO_USE_VIDEO     1
+  #define RB_DEMO_USE_VIDEO 1
+#endif
+#ifndef RB_DEMO_USE_AUDIO
+  #define RB_DEMO_USE_AUDIO 1
 #endif
 #if RB_DEMO_USE_CB_CLICK
   #define RB_DEMO_CBCLICK(_) _
@@ -26,6 +30,7 @@
 #endif
 
 extern struct rb_video *rb_demo_video;
+extern struct rb_audio *rb_demo_audio;
 extern struct rb_framebuffer rb_demo_fb;
 extern int rb_demo_mousex;
 extern int rb_demo_mousey;
@@ -37,6 +42,7 @@ struct rb_demo {
   int (*update)();
   int (*cb_click)(int x,int y,int value);
   int use_video;
+  int use_audio;
 };
 
 #define RB_DEMO(_name) const struct rb_demo rb_demo_##_name={ \
@@ -46,6 +52,7 @@ struct rb_demo {
   .update=demo_##_name##_update, \
   .cb_click=RB_DEMO_CBCLICK(demo_##_name##_cb_click), \
   .use_video=RB_DEMO_USE_VIDEO, \
+  .use_audio=RB_DEMO_USE_AUDIO, \
 };
 
 #endif
