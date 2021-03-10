@@ -37,7 +37,7 @@ struct rb_synth_node_runner_beep {
  */
  
 static int _rb_beep_config_init(struct rb_synth_node_config *config) {
-  CONFIG->level=0.25f;
+  CONFIG->level=0.15f;
   return 0;
 }
 

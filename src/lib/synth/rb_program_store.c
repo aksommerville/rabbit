@@ -3,6 +3,8 @@
 #include "rabbit/rb_serial.h"
 #include "rabbit/rb_synth_node.h"
 #include "rabbit/rb_pcm.h"
+#include "rabbit/rb_pcm_store.h"
+#include "rabbit/rb_synth.h"
 
 /* New.
  */
@@ -126,7 +128,7 @@ int rb_program_store_unload(struct rb_program_store *store) {
  */
 
 int rb_program_store_get_note(
-  struct rb_pcm **pcm,
+  struct rb_pcm **pcm_rtn,
   struct rb_pcmprint **pcmprint_rtn,
   struct rb_program_store *store,
   uint8_t programid,uint8_t noteid
@@ -134,7 +136,14 @@ int rb_program_store_get_note(
   if (programid>=0x80) return 0;
   if (noteid>=0x80) return 0;
   
-  //TODO check PCM store
+  // If the PCM store already has it, retain that and we're done.
+  uint16_t key=rb_pcm_store_generate_key(programid,noteid);
+  struct rb_pcm *pcm=rb_pcm_store_get(store->synth->pcm_store,key);
+  if (pcm) {
+    if (rb_pcm_ref(pcm)<0) return -1;
+    *pcm_rtn=pcm;
+    return 0;
+  }
   
   // Acquire node config.
   struct rb_program_entry *entry=store->entryv+programid;
@@ -154,7 +163,9 @@ int rb_program_store_get_note(
   struct rb_pcmprint *pcmprint=rb_pcmprint_new(entry->config,noteid);
   if (!pcmprint) return -1;
   
-  //TODO add to PCM cache
+  // Let the PCM store consider adding it.
+  // Ignore errors.
+  rb_pcm_store_add(store->synth->pcm_store,key,pcmprint->pcm);
   
   // If the caller didn't supply a printer return vector, we must run it to completion right now.
   if (!pcmprint_rtn) {
@@ -162,7 +173,7 @@ int rb_program_store_get_note(
       rb_pcmprint_del(pcmprint);
       return -1;
     }
-    *pcm=pcmprint->pcm; // HANDOFF
+    *pcm_rtn=pcmprint->pcm; // HANDOFF
     pcmprint->pcm=0;
     rb_pcmprint_del(pcmprint);
     return 0;
@@ -173,7 +184,7 @@ int rb_program_store_get_note(
     rb_pcmprint_del(pcmprint);
     return -1;
   }
-  *pcm=pcmprint->pcm;
+  *pcm_rtn=pcmprint->pcm;
   *pcmprint_rtn=pcmprint; // HANDOFF
   
   return 0;

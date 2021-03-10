@@ -1,6 +1,7 @@
 #include "rb_demo.h"
 #include <unistd.h>
 #include <sys/time.h>
+#include <time.h>
 #include <signal.h>
 #include <math.h>
 
@@ -18,6 +19,9 @@ int rb_demo_mousex=0;
 int rb_demo_mousey=0;
 static double rb_demo_starttime=0.0;
 static int rb_demo_framec=0;
+static double rb_demo_austarttime=0.0;
+static double rb_demo_auendtime=0.0;
+static int rb_demo_auframec=0;
 
 /* Current real time.
  */
@@ -26,6 +30,12 @@ static double rb_demo_now() {
   struct timeval tv={0};
   gettimeofday(&tv,0);
   return (double)tv.tv_sec+tv.tv_usec/1000000.0f;
+}
+
+static double rb_demo_threadtime() {
+  struct timespec tv={0};
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID,&tv);
+  return (double)tv.tv_sec+tv.tv_nsec/1000000000.0f;
 }
 
 /* Signal handler.
@@ -46,8 +56,10 @@ static void rb_rcvsig(int sigid) {
 static void rb_demo_quit(int status) {
 
   double endtime=rb_demo_now();
+  int audiorate=1;
   
   if (rb_demo_audio) {
+    audiorate=rb_demo_audio->delegate.rate;
     rb_audio_del(rb_demo_audio);
     rb_demo_audio=0;
   }
@@ -65,15 +77,27 @@ static void rb_demo_quit(int status) {
   
   if (status) {
     fprintf(stderr,"%s: Terminate due to error.\n",rb_demo->name);
-  } else if (rb_demo_framec>0) {
-    double elapsed=endtime-rb_demo_starttime;
-    double rate=rb_demo_framec/elapsed;
-    fprintf(stderr,
-      "%s: Normal exit. %d frames in %.03fs, average %.03f Hz.\n",
-      rb_demo->name,rb_demo_framec,elapsed,rate
-    );
   } else {
-    fprintf(stderr,"%s: Normal exit.\n",rb_demo->name);
+    
+    if (rb_demo_framec>0) {
+      double elapsed=endtime-rb_demo_starttime;
+      double rate=rb_demo_framec/elapsed;
+      fprintf(stderr,
+        "%s:VIDEO: %d frames in %.03fs, average %.03f Hz.\n",
+        rb_demo->name,rb_demo_framec,elapsed,rate
+      );
+    }
+    
+    if (rb_demo_auframec>0) {
+      double elapsed=rb_demo_auendtime-rb_demo_austarttime;
+      double generated=(double)rb_demo_auframec/(double)audiorate;
+      double score=elapsed/generated;
+      fprintf(stderr,
+        "%s:AUDIO: Generated %d frames (%.03fs) in %.03fs, score=%.06f (%.0fx)\n",
+        rb_demo->name,rb_demo_auframec,generated,elapsed,score,1.0/score
+      );
+    }
+    
   }
 }
 
@@ -104,10 +128,16 @@ static int rb_demo_cb_mbutton(struct rb_video *video,int btnid,int value) {
  */
  
 static int rb_demo_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
-  if (rb_demo_synth) {
-    return rb_synth_update(v,c,rb_demo_synth);
+  if (!rb_demo_auframec) {
+    rb_demo_austarttime=rb_demo_threadtime();
   }
-  memset(v,0,c<<1);
+  if (rb_demo_synth) {
+    if (rb_synth_update(v,c,rb_demo_synth)<0) return -1;
+  } else {
+    memset(v,0,c<<1);
+  }
+  rb_demo_auendtime=rb_demo_threadtime();
+  rb_demo_auframec+=c;
   return 0;
 }
 
@@ -115,6 +145,8 @@ static int rb_demo_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
  */
  
 static int rb_demo_init() {
+
+  signal(SIGINT,rb_rcvsig);
 
   if (rb_demo->use_video) {
     struct rb_video_delegate delegate={

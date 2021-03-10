@@ -8,7 +8,20 @@
 struct rb_pcm_store {
   struct rb_synth *synth; // WEAK
   int refc;
-  //TODO
+  
+  // (limit) are the threshold where evictions will happen.
+  // (target) are the level we evict to, normally half of (limit).
+  int size_limit;
+  int size_target;
+  int size;
+  int count_limit;
+  int count_target;
+  
+  struct rb_pcm_entry {
+    uint16_t key;
+    struct rb_pcm *pcm;
+  } *entryv;
+  int entryc,entrya;
 };
 
 struct rb_pcm_store *rb_pcm_store_new(struct rb_synth *synth);
@@ -19,5 +32,24 @@ int rb_pcm_store_ref(struct rb_pcm_store *store);
  * (Call this during a rate change).
  */
 int rb_pcm_store_unload(struct rb_pcm_store *store);
+
+static inline uint16_t rb_pcm_store_generate_key(uint8_t programid,uint8_t noteid) {
+  return (programid<<7)|noteid;
+}
+
+/* Consumers in general should stick to these two functions.
+ * 'get' returns weak, or null if not found.
+ * 'add' is not guaranteed to actually store the pcm.
+ * You can add a pcm to replace an existing one (but i think that's not the general design).
+ */
+struct rb_pcm *rb_pcm_store_get(const struct rb_pcm_store *store,uint16_t key);
+int rb_pcm_store_add(struct rb_pcm_store *store,uint16_t key,struct rb_pcm *pcm);
+
+/* Direct cache access, probably only useful internally.
+ * These update all internal state but will not trigger eviction. (only 'add' does that)
+ */
+int rb_pcm_store_search(const struct rb_pcm_store *store,uint16_t key);
+int rb_pcm_store_insert(struct rb_pcm_store *store,int p,uint16_t key,struct rb_pcm *pcm);
+int rb_pcm_store_remove(struct rb_pcm_store *store,int p,int c);
 
 #endif
