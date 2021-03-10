@@ -9,9 +9,9 @@
 #define IMAGE_W 16
 #define IMAGE_H 16
 
-#define OVERRIDE_ALPHAMODE RB_ALPHAMODE_OPAQUE
+//#define OVERRIDE_ALPHAMODE RB_ALPHAMODE_OPAQUE
 
-#define spritec 12000
+#define spritec 1000
 static struct sprite {
   int x,y; // top left
   int dx,dy;

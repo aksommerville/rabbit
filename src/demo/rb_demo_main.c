@@ -13,6 +13,7 @@ static volatile int rb_terminate=0;
 struct rb_video *rb_demo_video=0;
 struct rb_framebuffer rb_demo_fb={0};
 struct rb_audio *rb_demo_audio=0;
+struct rb_synth *rb_demo_synth=0;
 int rb_demo_mousex=0;
 int rb_demo_mousey=0;
 static double rb_demo_starttime=0.0;
@@ -57,6 +58,10 @@ static void rb_demo_quit(int status) {
     rb_video_del(rb_demo_video);
     rb_demo_video=0;
   }
+  if (rb_demo_synth) {
+    rb_synth_del(rb_demo_synth);
+    rb_demo_synth=0;
+  }
   
   if (status) {
     fprintf(stderr,"%s: Terminate due to error.\n",rb_demo->name);
@@ -99,6 +104,9 @@ static int rb_demo_cb_mbutton(struct rb_video *video,int btnid,int value) {
  */
  
 static int rb_demo_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
+  if (rb_demo_synth) {
+    return rb_synth_update(v,c,rb_demo_synth);
+  }
   memset(v,0,c<<1);
   return 0;
 }
@@ -124,11 +132,15 @@ static int rb_demo_init() {
   if (rb_demo->use_audio) {
     struct rb_audio_delegate delegate={
       .rate=44100,
-      .chanc=2,
+      .chanc=1,
       .cb_pcm_out=rb_demo_cb_pcm_out,
     };
     if (!(rb_demo_audio=rb_audio_new(0,&delegate))) {
       fprintf(stderr,"Failed to initialize default audio driver.\n");
+      return -1;
+    }
+    if (!(rb_demo_synth=rb_synth_new(rb_demo_audio->delegate.rate,rb_demo_audio->delegate.chanc))) {
+      fprintf(stderr,"Failed to initialize synthesizer.\n");
       return -1;
     }
   }

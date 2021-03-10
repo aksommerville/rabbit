@@ -5,15 +5,17 @@
 #include "rabbit/rb_video.h"
 #include "rabbit/rb_audio.h"
 #include "rabbit/rb_image.h"
+#include "rabbit/rb_synth.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define RB_DEFAULT_DEMO_NAME "xform"
+#define RB_DEFAULT_DEMO_NAME "midiin"
 
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \
-  _(xform)
+  _(xform) \
+  _(midiin)
   
 /* Define these things before including this header, if you don't want the defaults.
  */
@@ -21,6 +23,8 @@
   #define RB_DEMO_USE_VIDEO 1
 #endif
 #ifndef RB_DEMO_USE_AUDIO
+  // Ask for audio, we also make a synth and connect them.
+  // Wrapper does not configure the synth at all.
   #define RB_DEMO_USE_AUDIO 1
 #endif
 #if RB_DEMO_USE_CB_CLICK
@@ -32,6 +36,7 @@
 extern struct rb_video *rb_demo_video;
 extern struct rb_audio *rb_demo_audio;
 extern struct rb_framebuffer rb_demo_fb;
+extern struct rb_synth *rb_demo_synth;
 extern int rb_demo_mousex;
 extern int rb_demo_mousey;
 
