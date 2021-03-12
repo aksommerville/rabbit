@@ -129,10 +129,19 @@ static int rb_synth_update_pcmprint(struct rb_synth *synth,int framec) {
 /* Generate signal, mono.
  */
  
+static int __pcmc=0;
+ 
 static int rb_synth_update_signal_mono(int16_t *v,int c,struct rb_synth *synth) {
+
+  if (synth->pcmrunc!=__pcmc) {
+    //fprintf(stderr,"%d pcm runners\n",synth->pcmrunc);
+    __pcmc=synth->pcmrunc;
+  }
+
   int i=synth->pcmrunc;
+  struct rb_pcmrun *pcmrun=synth->pcmrunv+i;
   while (i-->0) {
-    struct rb_pcmrun *pcmrun=synth->pcmrunv+i;
+    pcmrun--;
     if (rb_pcmrun_update(v,c,pcmrun)<=0) {
       rb_pcmrun_cleanup(pcmrun);
       synth->pcmrunc--;
@@ -147,8 +156,9 @@ static int rb_synth_update_signal_mono(int16_t *v,int c,struct rb_synth *synth) 
  
 static int rb_synth_update_signal_multi(int16_t *v,int c,int framec,struct rb_synth *synth) {
   int i=synth->pcmrunc;
+  struct rb_pcmrun *pcmrun=synth->pcmrunv+i;
   while (i-->0) {
-    struct rb_pcmrun *pcmrun=synth->pcmrunv+i;
+    pcmrun--;
     int16_t *vv=v;
     int ii=framec;
     while (ii-->0) {
@@ -190,14 +200,19 @@ int rb_synth_update(int16_t *v,int c,struct rb_synth *synth) {
       }
       if (err>framec) err=framec;
       framec-=err;
-      if (rb_song_player_advance(synth->song,err)<0) {
-        rb_song_player_del(synth->song);
-        synth->song=0;
+      if (synth->song) {
+        if (rb_song_player_advance(synth->song,err)<0) {
+          rb_song_player_del(synth->song);
+          synth->song=0;
+        }
       }
       if (synth->chanc==1) {
         if (rb_synth_update_signal_mono(v,err,synth)<0) return -1;
+        v+=err;
       } else {
-        if (rb_synth_update_signal_multi(v,err*synth->chanc,err,synth)<0) return -1;
+        int samplec=err*synth->chanc;
+        if (rb_synth_update_signal_multi(v,samplec,err,synth)<0) return -1;
+        v+=samplec;
       }
     }
     
@@ -305,6 +320,7 @@ static int rb_synth_add_pcm(struct rb_synth *synth,struct rb_pcm *pcm) {
  */
 
 int rb_synth_play_note(struct rb_synth *synth,uint8_t programid,uint8_t noteid) {
+  //fprintf(stderr,"%s %02x %02x\n",__func__,programid,noteid);
   struct rb_pcm *pcm=0;
   struct rb_pcmprint *pcmprint=0;
   if (rb_program_store_get_note(&pcm,&pcmprint,synth->program_store,programid,noteid)<0) {

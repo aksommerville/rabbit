@@ -58,7 +58,9 @@ int rb_pcmrun_update(int16_t *v,int c,struct rb_pcmrun *pcmrun) {
   if (cpc<1) return 0;
   const int16_t *src=pcmrun->pcm->v+pcmrun->p;
   pcmrun->p+=cpc;
-  for (;cpc-->0;v++,src++) (*v)+=(*src);
+  for (;cpc-->0;v++,src++) {
+    (*v)+=(*src);
+  }
   if (pcmrun->p>=pcmrun->pcm->c) return 0;
   return 1;
 }

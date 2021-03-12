@@ -6,8 +6,8 @@
 #define RB_BEEP_FLDID_main    0x01
 #define RB_BEEP_FLDID_level   0x02
 
-#define RB_BEEP_DURATION_MS 200
-#define RB_BEEP_PEAK_TIME_MS 20
+#define RB_BEEP_DURATION_MS 600
+#define RB_BEEP_PEAK_TIME_MS 10
 
 /* Instance definition.
  */
@@ -120,7 +120,7 @@ static const struct rb_synth_node_field _rb_beep_fieldv[]={
   {
     .fldid=RB_BEEP_FLDID_level,
     .name="level",
-    .desc="Output level, 0..1. Default 0.25.",
+    .desc="Output level, 0..1. Default 0.15.",
     .config_offsetf=(uintptr_t)&((struct rb_synth_node_config_beep*)0)->level,
   },
 };
@@ -129,6 +129,7 @@ const struct rb_synth_node_type rb_synth_node_type_beep={
   .ntid=RB_SYNTH_NTID_beep,
   .name="beep",
   .desc="Trivial square wave instrument, entirely self-contained.",
+  .flags=RB_SYNTH_NODE_TYPE_PROGRAM,
   .config_objlen=sizeof(struct rb_synth_node_config_beep),
   .runner_objlen=sizeof(struct rb_synth_node_runner_beep),
   .fieldv=_rb_beep_fieldv,

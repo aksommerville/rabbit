@@ -341,6 +341,15 @@ int rb_synth_node_config_decode_partial(
           if (rb_synth_node_config_set_integer(config,field,v)<0) return -1;
         } break;
         
+      case RB_SYNTH_LINK_U0_8: {
+          if (srcp>srcc-1) {
+            // failed to decode scalar
+            return -1;
+          }
+          rb_sample_t v=SRC[srcp++]/255.0f;
+          if (rb_synth_node_config_set_scalar(config,field,v)<0) return -1;
+        } break;
+        
       default: {
           // unknown field format
           return -1;

@@ -1,13 +1,36 @@
 #include "rb_demo.h"
 #include "rabbit/rb_synth_node.h"
+#include "rabbit/rb_synth_event.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/poll.h>
 
+/*
+~/proj/rabbit> ls ../2020/midi/collection/joplin-scott/
+BreezeFromAlabama2.mid  EasyWinners.mid  favorite.mid  gladiols.mid  magnetic.mid  nonparel.mid  paragon.mid   ragdance.mid        smthngdn.mid  wallstrt.mid
+cascades.mid            elitesyn.mid     felicity.mid  kismet.mid    mapleaf.mid   original.mid  peachrne.mid  reflectn.mid        sugarcn.mid   weepwilo.mid
+cleopha.mid             entrtanr.mid     figleaf.mid   lilyquen.mid  newrag.mid    palmleaf.mid  pineapp.mid   SearchlightRag.mid  sunflowr.mid
+*/
 #define OSS_PATH "/dev/midi1"
+//#define FILE_PATH "src/demo/data/cleopha.mid"
+//#define FILE_PATH "src/demo/data/4-crow-no-maestro.mid"
+#define FILE_PATH 0
 
 static const uint8_t synth_config[]={
-  0x00,0x03,
+  0x00,0x17,
+    RB_SYNTH_NTID_instrument,
+    0x01,0x00, // main=buffer[0]
+    0x02,RB_SYNTH_LINK_SERIAL2,0x00,0x10, // nodes
+      RB_SYNTH_NTID_osc,
+        0x01,0x00, // main=buffer[0]
+        0x02,RB_SYNTH_LINK_NOTEHZ,
+        0x03,RB_SYNTH_LINK_U8,RB_OSC_SHAPE_SAWUP,
+        0x05,RB_SYNTH_LINK_U0_8,0x20,
+        0x00,
+      RB_SYNTH_NTID_env,
+        0x01,0x00, // main=buffer[0]
+        0x00,
+  0x36,0x03,
     RB_SYNTH_NTID_beep,
     0x01,0x00, // main=buffer[0]
 };
@@ -21,11 +44,78 @@ static void demo_midiin_quit() {
   }
 }
 
+static int demo_midiin_play_file(const char *path) {
+
+  int fd=open(path,O_RDONLY);
+  if (fd<0) {
+    fprintf(stderr,"%s: open failed\n",path);
+    return -1;
+  }
+  int seriala=16384;
+  char *serial=malloc(seriala);
+  if (!serial) {
+    close(fd);
+    return -1;
+  }
+  int serialc=0;
+  while (1) {
+    if (serialc>=seriala) {
+      seriala<<=1;
+      void *nv=realloc(serial,seriala);
+      if (!nv) {
+        close(fd);
+        free(serial);
+        return -1;
+      }
+      serial=nv;
+    }
+    int err=read(fd,serial+serialc,seriala-serialc);
+    if (err<0) {
+      close(fd);
+      free(serial);
+      fprintf(stderr,"%s: read failed\n",path);
+      return -1;
+    }
+    if (!err) break;
+    serialc+=err;
+  }
+  close(fd);
+  
+  struct rb_song *song=rb_song_new(serial,serialc,rb_demo_audio->delegate.rate);
+  free(serial);
+  if (!song) {
+    fprintf(stderr,"%s: Failed to decode MIDI file\n",path);
+    return -1;
+  }
+  
+  if (rb_audio_lock(rb_demo_audio)<0) {
+    rb_song_del(song);
+    return -1;
+  }
+  int err=rb_synth_play_song(rb_demo_synth,song,1);
+  rb_audio_unlock(rb_demo_audio);
+  rb_song_del(song);
+  if (err<0) {
+    fprintf(stderr,"rb_synth_play_song() failed\n");
+    return -1;
+  }
+  
+  return 0;
+}
+
 static int demo_midiin_init() {
 
-  if ((midiin_fd=open(OSS_PATH,O_RDONLY))<0) {
-    fprintf(stderr,"%s: Failed to open MIDI device -- does it exist?\n",OSS_PATH);
-    return -1;
+  if (OSS_PATH) {
+    if ((midiin_fd=open(OSS_PATH,O_RDONLY))<0) {
+      fprintf(stderr,"%s: Failed to open MIDI device -- does it exist?\n",OSS_PATH);
+      return -1;
+    }
+  }
+  if (FILE_PATH) {
+    if (demo_midiin_play_file(FILE_PATH)<0) {
+      fprintf(stderr,"%s: Failed to play MIDI file\n",FILE_PATH);
+      return -1;
+    }
   }
   
   if (rb_audio_lock(rb_demo_audio)<0) return -1;

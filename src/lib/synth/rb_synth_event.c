@@ -6,16 +6,21 @@
  */
  
 static int rb_synth_event_decode_sysex(struct rb_synth_event *event,const uint8_t *src,int srcc) {
+  event->opcode=0xf0;
+  event->chid=RB_CHID_ALL;
   int c,srcp;
   if ((srcp=rb_vlq_decode(&c,src,srcc))<1) return srcp;
   if (srcp>srcc-c) return 0;
   event->v=src+srcp;
   event->c=c;
   if ((event->c>0)&&(((uint8_t*)event->v)[event->c-1]==0xf7)) event->c--;
+  srcp+=c;
   return srcp;
 }
  
 static int rb_synth_event_decode_meta(struct rb_synth_event *event,const uint8_t *src,int srcc) {
+  event->opcode=0xff;
+  event->chid=RB_CHID_ALL;
   int srcp=0;
   if (srcp>=srcc) return 0;
   event->a=src[srcp++]; // type
@@ -25,6 +30,7 @@ static int rb_synth_event_decode_meta(struct rb_synth_event *event,const uint8_t
   if (srcp>srcc-c) return 0;
   event->v=src+srcp;
   event->c=c;
+  srcp+=c;
   return srcp;
 }
 

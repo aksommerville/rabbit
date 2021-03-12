@@ -6,8 +6,12 @@
  
 static const struct rb_synth_node_type *rb_synth_node_typev[256]={
 #define _(tag) [RB_SYNTH_NTID_##tag]=&rb_synth_node_type_##tag,
+  _(noop)
+  _(instrument)
   _(beep)
   _(gain)
+  _(osc)
+  _(env)
 #undef _
 };
 

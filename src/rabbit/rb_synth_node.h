@@ -31,6 +31,7 @@ struct rb_synth_node_runner {
 
 /* Caller must create all the necessary buffers and provide them here.
  * These must remain allocated throughout the runner's life.
+ * (bufferv) can be sparse, we check everything as we use it.
  */
 struct rb_synth_node_runner *rb_synth_node_runner_new(
   struct rb_synth_node_config *config,
@@ -61,6 +62,7 @@ int rb_synth_node_runner_get_duration(struct rb_synth_node_runner *runner);
 #define RB_SYNTH_LINK_SERIAL1 0x84 /* u8 length + data */
 #define RB_SYNTH_LINK_SERIAL2 0x85 /* u16 length + data*/
 #define RB_SYNTH_LINK_U8      0x86 /* u8 data (int) */
+#define RB_SYNTH_LINK_U0_8    0x87 /* u0.8 data (float) */
  
 struct rb_synth_node_link {
   const struct rb_synth_node_field *field;
@@ -127,6 +129,8 @@ struct rb_synth_node_field {
   int runner_offsetf;
   int (*config_sets)(struct rb_synth_node_config *config,const void *src,int srcc);
 };
+
+#define RB_SYNTH_NODE_TYPE_PROGRAM    0x0001 /* Suitable for use as a top-level program. */
  
 struct rb_synth_node_type {
   uint8_t ntid;
@@ -165,12 +169,27 @@ int rb_synth_node_type_validate(const struct rb_synth_node_type *type);
 const struct rb_synth_node_field *rb_synth_node_field_by_id(const struct rb_synth_node_type *type,uint8_t fldid);
 const struct rb_synth_node_field *rb_synth_node_field_by_name(const struct rb_synth_node_type *type,const char *name,int namec);
 
-#define RB_SYNTH_NTID_noop            0x00 /* TODO */
-#define RB_SYNTH_NTID_program         0x01 /* TODO contains buffers and nodes for generic design */
+#define RB_SYNTH_NTID_noop            0x00
+#define RB_SYNTH_NTID_instrument      0x01
 #define RB_SYNTH_NTID_beep            0x02
 #define RB_SYNTH_NTID_gain            0x03
+#define RB_SYNTH_NTID_osc             0x04
+#define RB_SYNTH_NTID_env             0x05
 
+extern const struct rb_synth_node_type rb_synth_node_type_noop;
+extern const struct rb_synth_node_type rb_synth_node_type_instrument;
 extern const struct rb_synth_node_type rb_synth_node_type_beep;
 extern const struct rb_synth_node_type rb_synth_node_type_gain;
+extern const struct rb_synth_node_type rb_synth_node_type_osc;
+extern const struct rb_synth_node_type rb_synth_node_type_env;
+
+#define RB_OSC_SHAPE_SINE      0x00
+#define RB_OSC_SHAPE_SQUARE    0x01
+#define RB_OSC_SHAPE_SAWUP     0x02
+#define RB_OSC_SHAPE_SAWDOWN   0x03
+#define RB_OSC_SHAPE_TRIANGLE  0x04
+#define RB_OSC_SHAPE_IMPULSE   0x05
+#define RB_OSC_SHAPE_NOISE     0x06
+#define RB_OSC_SHAPE_DC        0x07
 
 #endif

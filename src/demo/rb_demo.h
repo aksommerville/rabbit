@@ -15,7 +15,8 @@
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \
   _(xform) \
-  _(midiin)
+  _(midiin) \
+  _(midiredline)
   
 /* Define these things before including this header, if you don't want the defaults.
  */
