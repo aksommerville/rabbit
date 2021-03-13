@@ -198,7 +198,7 @@ static void _rb_osc_update_triangle_phasev(struct rb_synth_node_runner *runner,i
   rb_sample_t *v=RUNNER->mainv;
   const rb_sample_t *phase=RUNNER->phasev;
   for (;c-->0;v++,phase++) {
-    if (*phase>=0.5f) *v=RCONFIG->level-(*phase)*RUNNER->k;
+    if (*phase>=0.5f) *v=RCONFIG->level-((*phase)-0.5f)*RUNNER->k;
     else *v=(*phase)*RUNNER->k-RCONFIG->level;
   }
 }
@@ -207,7 +207,7 @@ static void _rb_osc_update_triangle_ratev(struct rb_synth_node_runner *runner,in
   rb_sample_t *v=RUNNER->mainv;
   const rb_sample_t *rate=RUNNER->ratev;
   for (;c-->0;v++,rate++) {
-    if (RUNNER->p>=0.5f) *v=RCONFIG->level-RUNNER->p*RUNNER->k;
+    if (RUNNER->p>=0.5f) *v=RCONFIG->level-(RUNNER->p-0.5f)*RUNNER->k;
     else *v=RUNNER->p*RUNNER->k-RCONFIG->level;
     RUNNER->p+=(*rate)*RCONFIG->invrate;
     if (RUNNER->p>=1.0f) RUNNER->p-=1.0f;
@@ -361,7 +361,7 @@ static const struct rb_synth_node_field _rb_osc_fieldv[]={
     .fldid=RB_OSC_FLDID_rate,
     .name="rate",
     .desc="Playback rate in Hz, normally RB_SYNTH_LINK_NOTEHZ.",
-    .flags=RB_SYNTH_NODE_FIELD_REQUIRED,
+    // Technically not required; user may set (phase) instead.
     .config_offsetf=(uintptr_t)&((struct rb_synth_node_config_osc*)0)->rate,
     .runner_offsetv=(uintptr_t)&((struct rb_synth_node_runner_osc*)0)->ratev,
     .runner_offsetf=(uintptr_t)&((struct rb_synth_node_runner_osc*)0)->rate,

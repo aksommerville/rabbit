@@ -1,5 +1,6 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_synth_node.h"
+#include "rabbit/rb_synth.h"
 
 #define RB_INSTRUMENT_FLDID_main 0x01
 #define RB_INSTRUMENT_FLDID_nodes 0x02
@@ -129,10 +130,9 @@ static int _rb_instrument_set_nodes(struct rb_synth_node_config *config,const vo
   while (srcp<srcc) {
     uint8_t ntid=SRC[srcp++];
     const struct rb_synth_node_type *type=rb_synth_node_type_by_id(ntid);
-    if (!type) {
-      // unknown node type
-      return -1;
-    }
+    if (!type) return rb_synth_error(config->synth,
+      "Unknown synth node type 0x%02x",ntid
+    );
     struct rb_synth_node_config *child=rb_instrument_config_spawn(config,type);
     if (!child) return -1;
     int err=rb_synth_node_config_decode_partial(child,SRC+srcp,srcc-srcp);
@@ -238,7 +238,7 @@ static const struct rb_synth_node_field _rb_instrument_fieldv[]={
     .fldid=RB_INSTRUMENT_FLDID_main,
     .name="main",
     .desc="Output.",
-    .flags=RB_SYNTH_NODE_FIELD_REQUIRED,
+    .flags=RB_SYNTH_NODE_FIELD_REQUIRED|RB_SYNTH_NODE_FIELD_BUF0IFNONE,
     .runner_offsetv=(uintptr_t)&((struct rb_synth_node_runner_instrument*)0)->mainv,
   },
   {

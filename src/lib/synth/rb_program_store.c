@@ -150,8 +150,8 @@ int rb_program_store_get_note(
   if (!entry->config) {
     if (!entry->serialc) return 0;
     if (!(entry->config=rb_synth_node_config_new_decode(store->synth,entry->serial,entry->serialc))) {
-      //TODO report error. we'll drop the serial data so as not to attempt it again in the future.
-      // I'm not calling this a hard error, but it definitely deserves loud reporting!
+      rb_synth_error(store->synth,"Failed to decode program 0x%02x from %d bytes",programid,entry->serialc);
+      // ^ Log it but don't fail the whole operation.
       free(entry->serial);
       entry->serial=0;
       entry->serialc=0;

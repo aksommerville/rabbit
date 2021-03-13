@@ -12,6 +12,9 @@ static const struct rb_synth_node_type *rb_synth_node_typev[256]={
   _(gain)
   _(osc)
   _(env)
+  _(add)
+  _(mlt)
+  _(fm)
 #undef _
 };
 
@@ -79,6 +82,13 @@ int rb_synth_node_type_validate(const struct rb_synth_node_type *type) {
       if (field->fldid<fldidmin) return -1;
       fldidmin=field->fldid+1;
       if (!field->name||!field->name[0]) return -1;
+      
+      if (field->flags&RB_SYNTH_NODE_FIELD_REQUIRED) {
+        // REQUIRED fields may only have id 1..32
+        if ((field->fldid<1)||(field->fldid>32)) return -1;
+      }
+      
+      // Offsets must be in the custom zone.
       if (field->config_offseti) {
         if (field->config_offseti<(int)sizeof(struct rb_synth_node_config)) return -1;
         if (field->config_offseti>type->config_objlen-sizeof(int)) return -1;
@@ -88,11 +98,11 @@ int rb_synth_node_type_validate(const struct rb_synth_node_type *type) {
         if (field->config_offsetf>type->config_objlen-sizeof(rb_sample_t)) return -1;
       }
       if (field->runner_offsetf) {
-        if (field->runner_offsetf<(int)sizeof(struct rb_synth_node_config)) return -1;
+        if (field->runner_offsetf<(int)sizeof(struct rb_synth_node_runner)) return -1;
         if (field->runner_offsetf>type->runner_objlen-sizeof(rb_sample_t)) return -1;
       }
       if (field->runner_offsetv) {
-        if (field->runner_offsetv<(int)sizeof(struct rb_synth_node_config)) return -1;
+        if (field->runner_offsetv<(int)sizeof(struct rb_synth_node_runner)) return -1;
         if (field->runner_offsetv>type->runner_objlen-sizeof(void*)) return -1;
       }
     }

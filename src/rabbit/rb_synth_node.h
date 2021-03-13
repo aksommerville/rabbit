@@ -76,6 +76,7 @@ struct rb_synth_node_config {
   int ready;
   struct rb_synth_node_link *linkv;
   int linkc,linka;
+  uint32_t assigned; // (1<<(fldid-1)) for fldid 1..32
 };
 
 struct rb_synth_node_config *rb_synth_node_config_new(
@@ -116,6 +117,7 @@ int rb_synth_node_config_field_is_buffer(const struct rb_synth_node_config *conf
  ************************************************************/
  
 #define RB_SYNTH_NODE_FIELD_REQUIRED     0x0001
+#define RB_SYNTH_NODE_FIELD_BUF0IFNONE   0x0002 /* Assign buffer 0 if unset at ready */
  
 struct rb_synth_node_field {
   uint8_t fldid;
@@ -175,6 +177,11 @@ const struct rb_synth_node_field *rb_synth_node_field_by_name(const struct rb_sy
 #define RB_SYNTH_NTID_gain            0x03
 #define RB_SYNTH_NTID_osc             0x04
 #define RB_SYNTH_NTID_env             0x05
+#define RB_SYNTH_NTID_add             0x06
+#define RB_SYNTH_NTID_mlt             0x07
+#define RB_SYNTH_NTID_fm              0x08
+//TODO
+#define RB_SYNTH_NTID_harm            0x09
 
 extern const struct rb_synth_node_type rb_synth_node_type_noop;
 extern const struct rb_synth_node_type rb_synth_node_type_instrument;
@@ -182,6 +189,12 @@ extern const struct rb_synth_node_type rb_synth_node_type_beep;
 extern const struct rb_synth_node_type rb_synth_node_type_gain;
 extern const struct rb_synth_node_type rb_synth_node_type_osc;
 extern const struct rb_synth_node_type rb_synth_node_type_env;
+extern const struct rb_synth_node_type rb_synth_node_type_add;
+extern const struct rb_synth_node_type rb_synth_node_type_mlt;
+extern const struct rb_synth_node_type rb_synth_node_type_fm;
+
+/* API for specific node types.
+ ****************************************************************/
 
 #define RB_OSC_SHAPE_SINE      0x00
 #define RB_OSC_SHAPE_SQUARE    0x01
@@ -191,5 +204,32 @@ extern const struct rb_synth_node_type rb_synth_node_type_env;
 #define RB_OSC_SHAPE_IMPULSE   0x05
 #define RB_OSC_SHAPE_NOISE     0x06
 #define RB_OSC_SHAPE_DC        0x07
+
+#define RB_ENV_FLAG_PRESET       0x80
+// If not PRESET:
+#define RB_ENV_FLAG_TIME_RANGE   0x40
+#define RB_ENV_FLAG_LEVEL_RANGE  0x20
+#define RB_ENV_FLAG_INIT_LEVEL   0x10
+#define RB_ENV_FLAG_HIRES_TIME   0x08
+#define RB_ENV_FLAG_HIRES_LEVEL  0x04
+#define RB_ENV_FLAG_SIGNED_LEVEL 0x02
+#define RB_ENV_FLAG_CURVE        0x01
+// If PRESET:
+#define RB_ENV_PRESET_ATTACK0  0x00 /* fast attack... */
+#define RB_ENV_PRESET_ATTACK1  0x20
+#define RB_ENV_PRESET_ATTACK2  0x40
+#define RB_ENV_PRESET_ATTACK3  0x60 /* ...slow attack */
+#define RB_ENV_PRESET_DECAY0   0x00 /* no decay... */
+#define RB_ENV_PRESET_DECAY1   0x08
+#define RB_ENV_PRESET_DECAY2   0x10
+#define RB_ENV_PRESET_DECAY3   0x18 /* ...sharp decay */
+#define RB_ENV_PRESET_RELEASE0 0x00 /* short release... */
+#define RB_ENV_PRESET_RELEASE1 0x01
+#define RB_ENV_PRESET_RELEASE2 0x02
+#define RB_ENV_PRESET_RELEASE3 0x03
+#define RB_ENV_PRESET_RELEASE4 0x04
+#define RB_ENV_PRESET_RELEASE5 0x05
+#define RB_ENV_PRESET_RELEASE6 0x06
+#define RB_ENV_PRESET_RELEASE7 0x07 /* ...long release */
 
 #endif

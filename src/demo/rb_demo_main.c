@@ -133,6 +133,10 @@ static int rb_demo_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
   }
   if (rb_demo_synth) {
     if (rb_synth_update(v,c,rb_demo_synth)<0) return -1;
+    if (rb_demo_synth->messagec) {
+      fprintf(stderr,"Synth error: %.*s\n",rb_demo_synth->messagec,rb_demo_synth->message);
+      rb_synth_clear_error(rb_demo_synth);
+    }
   } else {
     memset(v,0,c<<1);
   }

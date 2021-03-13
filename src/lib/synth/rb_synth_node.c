@@ -1,7 +1,6 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_synth_node.h"
-
-//TODO Would be polite of us to log errors or something.
+#include "rabbit/rb_synth.h"
 
 /* Trivial lifecycle.
  */
@@ -49,8 +48,10 @@ static int rb_synth_node_runner_assign(
     *(rb_sample_t*)(((char*)runner)+field->runner_offsetf)=v;
     return 0;
   }
-  // field does not support dynamic scalar assignment
-  return -1;
+  return rb_synth_error(runner->config->synth,
+    "Field %s.%s does not support dynamic scalar assignment.",
+    runner->config->type->name,field->name
+  );
 }
 
 /* Link runner, pre-init.
@@ -67,19 +68,26 @@ static int rb_synth_node_runner_link(
 
     if (link->bufferid<RB_SYNTH_BUFFER_COUNT) {
       if ((link->bufferid>=bufferc)||!bufferv[link->bufferid]) {
-        // requested buffer not provided by parent
-        return -1;
+        return rb_synth_error(runner->config->synth,
+          "Failed to set %s.%s: Buffer %d was not provided.",
+          runner->config->type->name,link->field->name,link->bufferid
+        );
       }
       if (!link->field->runner_offsetv) {
-        // field does not support buffer assignment
-        return -1;
+        return rb_synth_error(runner->config->synth,
+          "Field %s.%s does not support vector assignment.",
+          runner->config->type->name,link->field->name
+        );
       }
       *(rb_sample_t**)(((char*)runner)+link->field->runner_offsetv)=bufferv[link->bufferid];
 
     } else switch (link->bufferid) {
       case RB_SYNTH_LINK_NOTEID: if (rb_synth_node_runner_assign(runner,link->field,noteid)<0) return -1; break;
       case RB_SYNTH_LINK_NOTEHZ: if (rb_synth_node_runner_assign(runner,link->field,rb_rate_from_noteid(noteid))<0) return -1; break;
-      default: return -1;
+      default: return rb_synth_error(runner->config->synth,
+          "Unknown assignment mode 0x%02x for field %s.%s.",
+          link->bufferid,runner->config->type->name,link->field->name
+        );
     }
   }
   return 0;
@@ -93,7 +101,10 @@ struct rb_synth_node_runner *rb_synth_node_runner_new(
   rb_sample_t **bufferv,int bufferc,
   uint8_t noteid
 ) {
-  if (!config||!config->ready) return 0;
+  if (!config||!config->ready) {
+    rb_synth_error(config->synth,"Attempt to instantiate '%s' node, not fully configured.",config->type->name);
+    return 0;
+  }
   
   struct rb_synth_node_runner *runner=calloc(1,config->type->runner_objlen);
   if (!runner) return 0;
@@ -111,10 +122,12 @@ struct rb_synth_node_runner *rb_synth_node_runner_new(
   }
   
   if (config->type->runner_init(runner,noteid)<0) {
+    rb_synth_error(config->synth,"Failed to initialize '%s' runner.",config->type->name);
     rb_synth_node_runner_del(runner);
     return 0;
   }
   if (!runner->update) {
+    rb_synth_error(config->synth,"'%s' runner did not get an update hook at init.",config->type->name);
     rb_synth_node_runner_del(runner);
     return 0;
   }
@@ -215,8 +228,10 @@ static int rb_synth_node_config_set_scalar(
   rb_sample_t v
 ) {
   if (!field->config_offsetf) {
-    // field does not support constant scalar assignment
-    return -1;
+    return rb_synth_error(config->synth,
+      "Field %s.%s does not support constant scalar assignment.",
+      config->type->name,field->name
+    );
   }
   *(rb_sample_t*)(((char*)config)+field->config_offsetf)=v;
   return 0;
@@ -231,8 +246,10 @@ static int rb_synth_node_config_set_integer(
   int v
 ) {
   if (!field->config_offseti) {
-    // field does not support constant integer assignment
-    return -1;
+    return rb_synth_error(config->synth,
+      "Field %s.%s does not support constant integer assignment.",
+      config->type->name,field->name
+    );
   }
   *(int*)(((char*)config)+field->config_offseti)=v;
   return 0;
@@ -247,12 +264,16 @@ static int rb_synth_node_config_set_serial(
   const void *v,int c
 ) {
   if (!field->config_sets) {
-    // field does not support constant serial assignment
-    return -1;
+    return rb_synth_error(config->synth,
+      "Field %s.%s does not support constant serial assignment.",
+      config->type->name,field->name
+    );
   }
   if (field->config_sets(config,v,c)<0) {
-    // failed to decode field
-    return -1;
+    return rb_synth_error(config->synth,
+      "Failed to decode field %s.%s from %d bytes serial.",
+      config->type->name,field->name,c
+    );
   }
   return 0;
 }
@@ -272,9 +293,15 @@ int rb_synth_node_config_decode_partial(
     uint8_t fldid=SRC[srcp++];
     if (!fldid) break;
     const struct rb_synth_node_field *field=rb_synth_node_field_by_id(config->type,fldid);
-    if (!field) {
-      // unknown field
-      return -1;
+    if (!field) return rb_synth_error(config->synth,
+      "Unknown field 0x%02x for node type '%s'.",
+      fldid,config->type->name
+    );
+    
+    if ((fldid>=1)&&(fldid<=32)) {
+      uint32_t mask=1<<(fldid-1);
+      // We could check for duplicate assignment, but actually there are cases where it's ok.
+      config->assigned|=mask;
     }
     
     if (srcp>=srcc) {
@@ -289,10 +316,7 @@ int rb_synth_node_config_decode_partial(
       case RB_SYNTH_LINK_NOTEHZ: if (rb_synth_node_config_add_link(config,field,lead)<0) return -1; break;
       
       case RB_SYNTH_LINK_S15_16: {
-          if (srcp>srcc-4) {
-            // failed to decode scalar constant
-            return -1;
-          }
+          if (srcp>srcc-4) return -1;
           int32_t iv=(SRC[srcp]<<24)|(SRC[srcp+1]<<16)|(SRC[srcp+2]<<8)|SRC[srcp+3];
           srcp+=4;
           rb_sample_t v=iv/65536.0f;
@@ -304,56 +328,38 @@ int rb_synth_node_config_decode_partial(
       case RB_SYNTH_LINK_NONE: if (rb_synth_node_config_set_scalar(config,field,-1.0f)<0) return -1; break;
       
       case RB_SYNTH_LINK_SERIAL1: {
-          if (srcp>srcc-1) {
-            // failed to decode serial constant
-            return -1;
-          }
+          if (srcp>srcc-1) return -1;
           int len=SRC[srcp++];
-          if (srcp>srcc-len) {
-            // failed to decode serial constant
-            return -1;
-          }
+          if (srcp>srcc-len) return -1;
           if (rb_synth_node_config_set_serial(config,field,SRC+srcp,len)<0) return -1;
           srcp+=len;
         } break;
         
       case RB_SYNTH_LINK_SERIAL2: {
-          if (srcp>srcc-2) {
-            // failed to decode serial constant
-            return -1;
-          }
+          if (srcp>srcc-2) return -1;
           int len=(SRC[srcp]<<8)|SRC[srcp+1];
           srcp+=2;
-          if (srcp>srcc-len) {
-            // failed to decode serial constant
-            return -1;
-          }
+          if (srcp>srcc-len) return -1;
           if (rb_synth_node_config_set_serial(config,field,SRC+srcp,len)<0) return -1;
           srcp+=len;
         } break;
         
       case RB_SYNTH_LINK_U8: {
-          if (srcp>srcc-1) {
-            // failed to decode integer
-            return -1;
-          }
+          if (srcp>srcc-1) return -1;
           int v=SRC[srcp++];
           if (rb_synth_node_config_set_integer(config,field,v)<0) return -1;
         } break;
         
       case RB_SYNTH_LINK_U0_8: {
-          if (srcp>srcc-1) {
-            // failed to decode scalar
-            return -1;
-          }
+          if (srcp>srcc-1) return -1;
           rb_sample_t v=SRC[srcp++]/255.0f;
           if (rb_synth_node_config_set_scalar(config,field,v)<0) return -1;
         } break;
         
-      default: {
-          // unknown field format
-          return -1;
-        }
+      default: return rb_synth_error(config->synth,
+          "Unknown format 0x%02x for field %s.%s",
+          lead,config->type->name,field->name
+        );
     }
   }
   return srcp;
@@ -365,8 +371,31 @@ int rb_synth_node_config_decode_partial(
 int rb_synth_node_config_ready(struct rb_synth_node_config *config) {
   if (!config) return -1;
   if (config->ready) return 0;
+  
+  // Check required fields.
+  const struct rb_synth_node_field *field=config->type->fieldv;
+  int i=config->type->fieldc;
+  for (;i-->0;field++) {
+    if (field->fldid>32) break;
+    if (!(field->flags&RB_SYNTH_NODE_FIELD_REQUIRED)) continue;
+    if (config->assigned&(1<<(field->fldid-1))) continue;
+    if (field->flags&RB_SYNTH_NODE_FIELD_BUF0IFNONE) {
+      if (rb_synth_node_config_add_link(config,field,0x00)<0) return -1;
+    } else {
+      return rb_synth_error(config->synth,
+        "Required field %s.%s was not assigned.",
+        config->type->name,field->name
+      );
+    }
+  }
+  
+  // Let the config do its thing.
   if (config->type->config_ready) {
-    if (config->type->config_ready(config)<0) return -1;
+    if (config->type->config_ready(config)<0) {
+      return rb_synth_error(config->synth,
+        "Failed to finalize config for '%s' node",config->type->name
+      );
+    }
   }
   config->ready=1;
   return 0;

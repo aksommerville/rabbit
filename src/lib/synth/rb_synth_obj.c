@@ -4,6 +4,7 @@
 #include "rabbit/rb_pcm.h"
 #include "rabbit/rb_program_store.h"
 #include "rabbit/rb_pcm_store.h"
+#include <stdarg.h>
 
 #define RB_SYNTH_RATE_MIN 100
 #define RB_SYNTH_RATE_MAX 200000
@@ -57,6 +58,7 @@ void rb_synth_del(struct rb_synth *synth) {
   rb_song_player_del(synth->song);
   rb_program_store_del(synth->program_store);
   rb_pcm_store_del(synth->pcm_store);
+  if (synth->message) free(synth->message);
   
   free(synth);
 }
@@ -129,7 +131,7 @@ static int rb_synth_update_pcmprint(struct rb_synth *synth,int framec) {
 /* Generate signal, mono.
  */
  
-static int __pcmc=0;
+static int __pcmc=0;//XXX
  
 static int rb_synth_update_signal_mono(int16_t *v,int c,struct rb_synth *synth) {
 
@@ -148,6 +150,15 @@ static int rb_synth_update_signal_mono(int16_t *v,int c,struct rb_synth *synth) 
       memmove(pcmrun,pcmrun+1,sizeof(struct rb_pcmrun)*(synth->pcmrunc-i));
     }
   }
+  
+  #if 0//XXX
+  int16_t lo=v[0],hi=v[0];
+  for (i=c;i-->0;) {
+    if (v[i]<lo) lo=v[i]; else if (v[i]>hi) hi=v[i];
+  }
+  fprintf(stderr,"output: %d..%d\n",lo,hi);
+  #endif
+  
   return 0;
 }
 
@@ -194,6 +205,7 @@ int rb_synth_update(int16_t *v,int c,struct rb_synth *synth) {
     while (framec>0) {
       int err=rb_song_player_update(synth->song);
       if (err<=0) {
+        if (err<0) rb_synth_error(synth,"Error updating song");
         rb_song_player_del(synth->song);
         synth->song=0;
         err=framec;
@@ -324,7 +336,7 @@ int rb_synth_play_note(struct rb_synth *synth,uint8_t programid,uint8_t noteid) 
   struct rb_pcm *pcm=0;
   struct rb_pcmprint *pcmprint=0;
   if (rb_program_store_get_note(&pcm,&pcmprint,synth->program_store,programid,noteid)<0) {
-    return -1;
+    return rb_synth_error(synth,"Failed to acquire PCM for note %02x:%02x",programid,noteid);
   }
   if (pcmprint) {
     int err=rb_synth_add_pcmprint(synth,pcmprint);
@@ -369,4 +381,34 @@ int rb_synth_events(struct rb_synth *synth,const void *src,int srcc) {
     if (rb_synth_event(synth,&event)<0) return -1;
   }
   return srcp;
+}
+
+/* Sticky error message.
+ */
+ 
+int rb_synth_error(struct rb_synth *synth,const char *fmt,...) {
+  if (!synth->messagec) {
+    if (fmt&&fmt[0]) {
+      char tmp[256];
+      va_list vargs;
+      va_start(vargs,fmt);
+      int tmpc=vsnprintf(tmp,sizeof(tmp),fmt,vargs);
+      if ((tmpc>0)&&(tmpc<sizeof(tmp))) {
+        char *nv=malloc(tmpc+1);
+        if (nv) {
+          memcpy(nv,tmp,tmpc+1);
+          if (synth->message) free(synth->message);
+          synth->message=nv;
+          synth->messagec=tmpc;
+        }
+      }
+    }
+  }
+  return -1;
+}
+
+void rb_synth_clear_error(struct rb_synth *synth) {
+  if (synth->message) free(synth->message);
+  synth->message=0;
+  synth->messagec=0;
 }

@@ -33,6 +33,9 @@ struct rb_synth {
   
   struct rb_program_store *program_store;
   struct rb_pcm_store *pcm_store;
+  
+  char *message;
+  int messagec;
 };
 
 /* (rate) in Hertz, must match the driver.
@@ -84,5 +87,14 @@ int rb_synth_play_note(struct rb_synth *synth,uint8_t programid,uint8_t noteid);
  */
 int rb_synth_event(struct rb_synth *synth,const struct rb_synth_event *event);
 int rb_synth_events(struct rb_synth *synth,const void *src,int srcc);
+
+/* Setting error message always returns -1, for convenience.
+ * If a message is already present, rb_synth_error() will *not* replace it.
+ * Internally, synth ops may set this message but not actually fail, meaning something went wrong but we can proceed without.
+ * Owner should check the message after any failure, and periodically otherwise.
+ * (no harm if you don't)
+ */
+int rb_synth_error(struct rb_synth *synth,const char *fmt,...);
+void rb_synth_clear_error(struct rb_synth *synth);
 
 #endif

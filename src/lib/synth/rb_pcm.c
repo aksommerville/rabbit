@@ -1,6 +1,7 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_pcm.h"
 #include "rabbit/rb_synth_node.h"
+#include "rabbit/rb_synth.h"
 
 /* PCM dump object.
  */
@@ -96,6 +97,10 @@ struct rb_pcmprint *rb_pcmprint_new(
   
   int samplec=rb_synth_node_runner_get_duration(pcmprint->node);
   if (samplec<1) {
+    rb_synth_error(config->synth,
+      "'%s' node did not report a total duration; can't use as a main program.",
+      config->type->name
+    );
     rb_pcmprint_del(pcmprint);
     return 0;
   }

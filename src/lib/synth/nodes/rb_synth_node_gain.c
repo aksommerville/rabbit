@@ -38,7 +38,7 @@ static int _rb_gain_config_init(struct rb_synth_node_config *config) {
  */
  
 static int _rb_gain_config_ready(struct rb_synth_node_config *config) {
-  if (rb_synth_node_config_field_is_buffer(config,RB_GAIN_FLDID_main)<0) return -1;
+  if (!rb_synth_node_config_field_is_buffer(config,RB_GAIN_FLDID_main)) return -1;
   return 0;
 }
 

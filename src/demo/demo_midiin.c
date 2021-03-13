@@ -12,24 +12,134 @@ cascades.mid            elitesyn.mid     felicity.mid  kismet.mid    mapleaf.mid
 cleopha.mid             entrtanr.mid     figleaf.mid   lilyquen.mid  newrag.mid    palmleaf.mid  pineapp.mid   SearchlightRag.mid  sunflowr.mid
 */
 #define OSS_PATH "/dev/midi1"
-//#define FILE_PATH "src/demo/data/cleopha.mid"
+#define FILE_PATH "src/demo/data/cleopha.mid"
 //#define FILE_PATH "src/demo/data/4-crow-no-maestro.mid"
-#define FILE_PATH 0
+//#define FILE_PATH 0
+
+#define ENV(a,d,r) ( \
+  RB_ENV_FLAG_PRESET| \
+  RB_ENV_PRESET_ATTACK##a| \
+  RB_ENV_PRESET_DECAY##d| \
+  RB_ENV_PRESET_RELEASE##r| \
+0)
 
 static const uint8_t synth_config[]={
-  0x00,0x17,
+
+  0x00,66, // bright cartoon piano
+    RB_SYNTH_NTID_instrument,
+    0x02,RB_SYNTH_LINK_SERIAL2,0,61, // nodes
+      RB_SYNTH_NTID_env,
+        0x01,0x01, // main
+        0x02,RB_SYNTH_LINK_U8,0x01, // mode=set
+        0x03,RB_SYNTH_LINK_SERIAL1,11, // content
+          RB_ENV_FLAG_INIT_LEVEL|RB_ENV_FLAG_LEVEL_RANGE,
+          0x00,0x01,0x00,
+          0x20,
+          0x08,0xff,
+          0x40,0xc0,
+          0xf0,0x80,
+        0,
+      RB_SYNTH_NTID_fm,
+        0x01,0x00, // main
+        0x02,RB_SYNTH_LINK_NOTEHZ, // rate
+        0x03,RB_SYNTH_LINK_S15_16,0x00,0x00,0x00,0x00, // mod0
+        0x04,RB_SYNTH_LINK_S15_16,0x00,0x01,0x00,0x00, // mod1
+        0x05,0x01, // range
+        0x00,
+      RB_SYNTH_NTID_env,
+        0x01,0x00, // main
+        0x03,RB_SYNTH_LINK_SERIAL1,13, // content
+          RB_ENV_FLAG_CURVE|RB_ENV_FLAG_LEVEL_RANGE,
+          0x00,0x00,0x20,
+          0x04,0xff,0xc0,
+          0x0c,0x50,0xc0,
+          0x80,0x00,0x60,
+        0x00,
+
+  0x34,77, // ok electric guitar
+    RB_SYNTH_NTID_instrument,
+    0x01,0x00, // main
+    0x02,RB_SYNTH_LINK_SERIAL2,0,70, // nodes
+      RB_SYNTH_NTID_fm,
+        0x01,0x01, // main
+        0x02,RB_SYNTH_LINK_NOTEHZ, // rate
+        0x03,RB_SYNTH_LINK_S15_16,0x00,0x00,0x00,0x00, // mod0
+        0x04,RB_SYNTH_LINK_S15_16,0x00,0x00,0x80,0x00, // mod1
+        0x05,RB_SYNTH_LINK_S15_16,0x00,0x01,0x00,0x00, // range
+        0x00,
+      RB_SYNTH_NTID_mlt,
+        0x01,0x01, // main
+        0x02,RB_SYNTH_LINK_U0_8,0x80, // arg
+        0x00,
+      RB_SYNTH_NTID_add,
+        0x01,0x01, // main
+        0x02,RB_SYNTH_LINK_U0_8,0x80, // arg
+        0x00,
+      RB_SYNTH_NTID_osc,
+        0x01,0x00, // main
+        0x03,RB_SYNTH_LINK_U8,RB_OSC_SHAPE_SINE,
+        0x04,0x01, // phase
+        0x05,RB_SYNTH_LINK_U0_8,0x40, // level
+        0x00,
+      RB_SYNTH_NTID_env,
+        0x01,0x00, // main
+        0x03,RB_SYNTH_LINK_U8,ENV(0,3,7),
+        0x00,
+      RB_SYNTH_NTID_gain,
+        0x01,0x00, // main
+        0x02,RB_SYNTH_LINK_S15_16,0x00,0x05,0x00,0x00,
+        0x03,RB_SYNTH_LINK_U0_8,0x20,
+        0x00,
+
+  0x35,77, // wacky brass
     RB_SYNTH_NTID_instrument,
     0x01,0x00, // main=buffer[0]
-    0x02,RB_SYNTH_LINK_SERIAL2,0x00,0x10, // nodes
+    0x02,RB_SYNTH_LINK_SERIAL2,0,70, // nodes
       RB_SYNTH_NTID_osc,
         0x01,0x00, // main=buffer[0]
         0x02,RB_SYNTH_LINK_NOTEHZ,
-        0x03,RB_SYNTH_LINK_U8,RB_OSC_SHAPE_SAWUP,
-        0x05,RB_SYNTH_LINK_U0_8,0x20,
+        0x03,RB_SYNTH_LINK_U8,RB_OSC_SHAPE_SINE,
+        0x05,RB_SYNTH_LINK_U0_8,0xff, // level
         0x00,
       RB_SYNTH_NTID_env,
         0x01,0x00, // main=buffer[0]
+        0x02,RB_SYNTH_LINK_U8,0x00, // mode=mlt
+        0x03,RB_SYNTH_LINK_U8,
+          RB_ENV_FLAG_PRESET
+          |RB_ENV_PRESET_ATTACK1
+          |RB_ENV_PRESET_DECAY1
+          |RB_ENV_PRESET_RELEASE4,
         0x00,
+        
+      RB_SYNTH_NTID_osc,
+        0x01,0x01, // main=buffer[1]
+        0x02,RB_SYNTH_LINK_NOTEHZ,
+        0x03,RB_SYNTH_LINK_U8,RB_OSC_SHAPE_SINE,
+        0x05,RB_SYNTH_LINK_U0_8,0xff, // level
+        0x00,
+      RB_SYNTH_NTID_mlt,
+        0x01,0x01, // main=buffer[1]
+        0x02,RB_SYNTH_LINK_S15_16,0x00,0x08,0x00,0x00,
+        0x00,
+      RB_SYNTH_NTID_env,
+        0x01,0x01, // main=buffer[1]
+        0x03,RB_SYNTH_LINK_U8,
+          RB_ENV_FLAG_PRESET
+          |RB_ENV_PRESET_ATTACK0
+          |RB_ENV_PRESET_DECAY1
+          |RB_ENV_PRESET_RELEASE5,
+        0x00,
+        
+      RB_SYNTH_NTID_mlt,
+        0x01,0x00, // main=buffer[0]
+        0x02,0x01, // arg=buffer[1]
+        0x00,
+      RB_SYNTH_NTID_gain,
+        0x01,0x00, // main=buffer[0]
+        0x02,RB_SYNTH_LINK_S15_16,0x00,0x14,0x00,0x00, // gain
+        0x03,RB_SYNTH_LINK_U0_8,0x10, // clip
+        0x00,
+        
   0x36,0x03,
     RB_SYNTH_NTID_beep,
     0x01,0x00, // main=buffer[0]
@@ -140,6 +250,10 @@ static int demo_midiin_update() {
   }
   if (rb_audio_lock(rb_demo_audio)<0) return -1;
   if (rb_synth_events(rb_demo_synth,buf,bufc)<0) {
+    if (rb_demo_synth->messagec) {
+      fprintf(stderr,"Synth error: %.*s\n",rb_demo_synth->messagec,rb_demo_synth->message);
+      rb_synth_clear_error(rb_demo_synth);
+    }
     fprintf(stderr,"rb_synth_events() failed with %d bytes input\n",bufc);
     rb_audio_unlock(rb_demo_audio);
     return -1;

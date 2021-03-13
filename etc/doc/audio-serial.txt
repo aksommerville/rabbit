@@ -1,0 +1,33 @@
+Rabbit Audio Serial Formats
+
+env.content ===========================================
+
+High bit of first byte distinguishes Short Format from Long Format.
+
+Short Format, single byte:
+  80 Always 1
+  60 Attack time: 0=fast .. 3=slow
+  18 Decay amount: 0=none .. 3=lots
+  07 Release time: 0=short .. 7=long
+  
+Long Format:
+  u8 flags:
+    80 Always 0
+    40 TIME_RANGE
+    20 LEVEL_RANGE
+    10 INIT_LEVEL
+    08 HIRES_TIME (T is u0.16 instead of u0.8)
+    04 HIRES_LEVEL (L is x0.16 instead of x0.8)
+    02 SIGNED_LEVEL (L is s0.x instead of u0.x)
+    01 CURVE
+  (u2.6) Time scale, seconds, if (TIME_RANGE). Default 1.
+  (u16.8) Level scale, if (LEVEL_RANGE). Default 1.
+  (L) Initial level, if (INIT_LEVEL). Default 0.
+  ... Points:
+    T time, or exactly zero to terminate
+    L level
+    (s0.8) curve, if (CURVE)
+    
+By default, Long Format is 1 byte header plus 2 bytes per point.
+Can extend to 6 bytes header plus 5 bytes per point.
+("Long" is relative).
