@@ -1,5 +1,19 @@
 Rabbit Audio Serial Formats
 
+program store =========================================
+
+Deliver to rb_synth_configure().
+
+No header.
+Any number of:
+  u8 programid
+  vlq length
+  ... node:
+    u8 ntid
+    ... fields, terminated with a leading zero
+    
+(programid) with high bit set are reserved for future use and are safely ignored today.
+
 env.content ===========================================
 
 High bit of first byte distinguishes Short Format from Long Format.

@@ -65,6 +65,22 @@ int rb_pcm_store_unload(struct rb_pcm_store *store) {
   return 0;
 }
 
+/* Remove PCMs for a given program.
+ */
+ 
+int rb_pcm_store_drop_program(struct rb_pcm_store *store,uint8_t programid) {
+  if (programid>=0x80) return 0;
+  uint16_t lokey=rb_pcm_store_generate_key(programid,0x00);
+  uint16_t hikey=rb_pcm_store_generate_key(programid+1,0x00);
+  int lop=rb_pcm_store_search(store,lokey);
+  if (lop<0) lop=-lop-1;
+  if ((lop>=store->entryc)||(store->entryv[lop].key>=hikey)) return 0; // got none
+  int hip=rb_pcm_store_search(store,hikey);
+  if (hip<0) hip=-hip-1;
+  int c=hip-lop;
+  return rb_pcm_store_remove(store,lop,c);
+}
+
 /* Consider evicting PCMs.
  */
  

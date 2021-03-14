@@ -131,15 +131,7 @@ static int rb_synth_update_pcmprint(struct rb_synth *synth,int framec) {
 /* Generate signal, mono.
  */
  
-static int __pcmc=0;//XXX
- 
 static int rb_synth_update_signal_mono(int16_t *v,int c,struct rb_synth *synth) {
-
-  if (synth->pcmrunc!=__pcmc) {
-    //fprintf(stderr,"%d pcm runners\n",synth->pcmrunc);
-    __pcmc=synth->pcmrunc;
-  }
-
   int i=synth->pcmrunc;
   struct rb_pcmrun *pcmrun=synth->pcmrunv+i;
   while (i-->0) {
@@ -150,15 +142,6 @@ static int rb_synth_update_signal_mono(int16_t *v,int c,struct rb_synth *synth) 
       memmove(pcmrun,pcmrun+1,sizeof(struct rb_pcmrun)*(synth->pcmrunc-i));
     }
   }
-  
-  #if 0//XXX
-  int16_t lo=v[0],hi=v[0];
-  for (i=c;i-->0;) {
-    if (v[i]<lo) lo=v[i]; else if (v[i]>hi) hi=v[i];
-  }
-  fprintf(stderr,"output: %d..%d\n",lo,hi);
-  #endif
-  
   return 0;
 }
 
@@ -378,7 +361,9 @@ int rb_synth_events(struct rb_synth *synth,const void *src,int srcc) {
       return srcp?srcp:-1;
     }
     srcp+=err;
-    if (rb_synth_event(synth,&event)<0) return -1;
+    if (rb_synth_event(synth,&event)<0) {
+      return -1;
+    }
   }
   return srcp;
 }

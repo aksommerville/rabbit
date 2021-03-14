@@ -67,6 +67,9 @@ static int rb_program_store_receive_serial(struct rb_program_store *store,uint8_
     memcpy(nv,src,srcc);
   }
   if (entry->config) {
+    // Drop any existing PCMs from the prior config.
+    // We only check for this when a prior config existed.
+    rb_pcm_store_drop_program(store->synth->pcm_store,programid);
     rb_synth_node_config_del(entry->config);
     entry->config=0;
   }

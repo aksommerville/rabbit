@@ -1,6 +1,7 @@
 #include "rb_demo.h"
 #include "rabbit/rb_synth_node.h"
 #include "rabbit/rb_synth_event.h"
+#include "rabbit/rb_fs.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/poll.h>
@@ -214,6 +215,14 @@ static int demo_midiin_play_file(const char *path) {
 }
 
 static int demo_midiin_init() {
+
+  //XXX TEMP Dump the encoded config into a file for use elsewhere.
+  if (0) {
+    const char *dstpath="src/demo/data/midiin.synth";
+    if (rb_file_write(dstpath,synth_config,sizeof(synth_config))>=0) {
+      fprintf(stderr,"%s: Wrote synth config, %d bytes.\n",dstpath,(int)sizeof(synth_config));
+    }
+  }
 
   if (OSS_PATH) {
     if ((midiin_fd=open(OSS_PATH,O_RDONLY))<0) {

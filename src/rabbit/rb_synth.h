@@ -56,6 +56,8 @@ int rb_synth_reinit(struct rb_synth *synth,int rate,int chanc);
 
 /* Load encoded program configurations.
  * You can "configure" multiple times; old content remains unless overwritten specifically.
+ * Caches get updated and cleared out as necessary.
+ * If you replace a config for which some PCM is already playing, it will play out unaffected.
  * "unconfigure" to drop all prior config data.
  */
 int rb_synth_configure(struct rb_synth *synth,const void *src,int srcc);

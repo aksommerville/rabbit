@@ -30,8 +30,10 @@ int rb_pcm_store_ref(struct rb_pcm_store *store);
 
 /* Drop any live objects which might depend on the global output rate.
  * (Call this during a rate change).
+ * Or drop just those associated with a given programid, eg if you're changing that program.
  */
 int rb_pcm_store_unload(struct rb_pcm_store *store);
+int rb_pcm_store_drop_program(struct rb_pcm_store *store,uint8_t programid);
 
 static inline uint16_t rb_pcm_store_generate_key(uint8_t programid,uint8_t noteid) {
   return (programid<<7)|noteid;
