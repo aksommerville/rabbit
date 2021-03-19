@@ -14,6 +14,9 @@ struct rb_ossmidi;
 #define RB_CLI_COMMAND_UNSET   0
 #define RB_CLI_COMMAND_help    1
 #define RB_CLI_COMMAND_synth   2
+#define RB_CLI_COMMAND_plan    3
+#define RB_CLI_COMMAND_archive 4
+#define RB_CLI_COMMAND_synthc  5
  
 struct rb_cli {
 // argv:
@@ -23,6 +26,7 @@ struct rb_cli {
   int audiorate;
   int audiochanc;
   const char *datapath;
+  const char *dstpath;
   const char **pargv;
   int pargc,parga;
 // Global state by request only:
@@ -64,6 +68,9 @@ int rb_cli_update(struct rb_cli *cli);
  ************************************************************/
  
 int rb_cli_main_synth(struct rb_cli *cli);
+int rb_cli_main_plan(struct rb_cli *cli);
+int rb_cli_main_archive(struct rb_cli *cli);
+int rb_cli_main_synthc(struct rb_cli *cli);
 
 /* Helpers for serial data.
  ************************************************************/

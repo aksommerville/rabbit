@@ -708,7 +708,7 @@ int rb_aucm_compile_statement(struct rb_aucm *aucm) {
   
   // If we have (programid), root scope of instrument, expect a Node Statement.
   // If we also have (noteid), we're at the root scope of a sound, works the same as instrument for us.
-  if (aucm->scope.programid) {
+  if (aucm->scope.programid<0x80) {
     return rb_aucm_compile_node_statement(aucm);
   }
   

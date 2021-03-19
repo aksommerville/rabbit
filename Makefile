@@ -34,11 +34,11 @@ EXE_ITEST:=out/itest
 EXES_UTEST:=$(patsubst mid/test/unit/%.o,out/utest/%,$(OFILES_UTEST))
 all:$(LIB_STATIC) $(EXE_DEMO) $(EXE_CLI) $(EXE_ITEST) $(EXES_UTEST)
 
-$(LIB_STATIC):$(OFILES_LIB);$(PRECMD) $(AR) $@ $^
-$(EXE_DEMO):$(OFILES_LIB) $(OFILES_DEMO);$(PRECMD) $(LD) -o $@ $^ $(LDPOST)
-$(EXE_CLI):$(OFILES_LIB) $(OFILES_CLI);$(PRECMD) $(LD) -o $@ $^ $(LDPOST)
-$(EXE_ITEST):$(OFILES_LIB) $(OFILES_ITEST) $(OFILES_CTEST);$(PRECMD) $(LD) -o $@ $^ $(LDPOST)
-out/utest/%:mid/test/unit/%.o $(OFILES_CTEST);$(PRECMD) $(LD) -o $@ $^ $(LDPOST)
+$(LIB_STATIC):$(OFILES_LIB);$(PRECMD) $(AR) $@ $(OFILES_LIB)
+$(EXE_DEMO):$(OFILES_LIB) $(OFILES_DEMO);$(PRECMD) $(LD) -o $@ $(OFILES_LIB) $(OFILES_DEMO) $(LDPOST)
+$(EXE_CLI):$(OFILES_LIB) $(OFILES_CLI);$(PRECMD) $(LD) -o $@ $(OFILES_LIB) $(OFILES_CLI) $(LDPOST)
+$(EXE_ITEST):$(OFILES_LIB) $(OFILES_ITEST) $(OFILES_CTEST);$(PRECMD) $(LD) -o $@ $(OFILES_LIB) $(OFILES_ITEST) $(OFILES_CTEST) $(LDPOST)
+out/utest/%:mid/test/unit/%.o $(OFILES_CTEST);$(PRECMD) $(LD) -o $@ $< $(OFILES_CTEST) $(LDPOST)
 
 edit:$(EXE_CLI);$(EXE_CLI)
 edit-%:$(EXE_CLI);$(EXE_CLI) $*
@@ -47,3 +47,19 @@ demo-%:$(EXE_DEMO);$(EXE_DEMO) $*
 test:$(EXE_ITEST) $(EXES_UTEST);RB_TEST_FILTER="" etc/tool/runtests.sh $^
 test-%:$(EXE_ITEST) $(EXES_UTEST);RB_TEST_FILTER="$*" etc/tool/runtests.sh $^
 clean:;rm -rf mid out
+
+#--------------------------------------------------
+# Data rules. These are a template for client apps to copy.
+
+DATASRCDIR:=src/data
+DATAMIDDIR:=mid/data
+DATADST:=out/data
+DATAPLAN:=$(DATAMIDDIR)/plan
+DATASRCFILES:=$(shell find $(DATASRCDIR) -type f)
+all:$(DATADST)
+$(EXE_DEMO):$(DATADST)
+
+ifneq ($(MAKECMDGOALS),clean)
+  include $(DATAPLAN)
+endif
+$(DATAPLAN):$(EXE_CLI) $(DATASRCFILES);$(PRECMD) $(EXE_CLI) plan --dst=$(DATAPLAN) --data=$(DATASRCDIR)

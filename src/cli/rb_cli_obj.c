@@ -16,12 +16,16 @@ void rb_cli_print_usage(struct rb_cli *cli) {
     "COMMAND:\n"
     "  help         Print this message.\n"
     "  synth        Initialize a synthesizer and watch input files.\n"
+    "  plan         Generate a Makefile to rebuild the archive.\n"
+    "  archive      Pack finished data files into one archive.\n"
+    "  synthc       Compile one instrument or sound effect.\n"
     "\n"
     "OPTIONS:\n"
     "  --audio=NAME    [%s] Audio driver.\n"
     "  --rate=HZ       [44100] Audio output rate.\n"
     "  --chanc=COUNT   [1] Audio channel count.\n"
     "  --data=PATH     [src/demo/data] Directory containing data input files.\n"
+    "  --dst=PATH      [] Output file.\n"
     "\n"
   ,cli->exename
   ,default_audio?default_audio->name:"ERROR!"
@@ -62,6 +66,9 @@ static int rb_cli_command_eval(const char *src) {
   
   _(help)
   _(synth)
+  _(plan)
+  _(archive)
+  _(synthc)
   
   #undef _
   return -1;
@@ -105,6 +112,7 @@ static int rb_cli_receive_arg(struct rb_cli *cli,const char *k,int kc,const char
   INTARG(audiorate,"rate",100,200000)
   INTARG(audiochanc,"chanc",1,8)
   STRARG(datapath,"data")
+  STRARG(dstpath,"dst")
   
   #undef STRARG
   #undef INTARG

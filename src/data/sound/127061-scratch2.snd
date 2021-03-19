@@ -1,0 +1,11 @@
+instrument {
+  osc main~1 shape=sine rate=9;
+  add main~1 arg=1;
+  mlt main~1 arg=2;
+
+  harm rate=400, main~2 { 60 00 5f 00 40 60 }
+  add main~2, arg=210;
+
+  fm rate~2, mod0=100, mod1=0.9, range~1;
+  env { attack=0; decay=2; release=4; }
+}
