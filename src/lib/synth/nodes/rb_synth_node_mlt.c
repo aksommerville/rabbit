@@ -1,8 +1,8 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_synth_node.h"
 
-#define RB_GAIN_FLDID_main    0x01
-#define RB_GAIN_FLDID_arg     0x02
+#define RB_MLT_FLDID_main    0x01
+#define RB_MLT_FLDID_arg     0x02
 
 /* Instance definition.
  */
@@ -16,6 +16,7 @@ struct rb_synth_node_runner_mlt {
   struct rb_synth_node_runner hdr;
   rb_sample_t *mainv;
   rb_sample_t *argv;
+  rb_sample_t arg;
 };
 
 #define CONFIG ((struct rb_synth_node_config_mlt*)config)
@@ -34,7 +35,7 @@ static int _rb_mlt_config_init(struct rb_synth_node_config *config) {
  */
  
 static int _rb_mlt_config_ready(struct rb_synth_node_config *config) {
-  if (!rb_synth_node_config_field_is_buffer(config,RB_GAIN_FLDID_main)) return -1;
+  if (!rb_synth_node_config_field_is_buffer(config,RB_MLT_FLDID_main)) return -1;
   return 0;
 }
 
@@ -52,7 +53,7 @@ static void _rb_mlt_runner_update_v(struct rb_synth_node_runner *runner,int c) {
 static void _rb_mlt_runner_update_s(struct rb_synth_node_runner *runner,int c) {
   rb_sample_t *main=RUNNER->mainv;
   for (;c-->0;main++) {
-    (*main)*=RCONFIG->arg;
+    (*main)*=RUNNER->arg;
   }
 }
 
@@ -61,6 +62,9 @@ static void _rb_mlt_runner_update_s(struct rb_synth_node_runner *runner,int c) {
  
 static int _rb_mlt_runner_init(struct rb_synth_node_runner *runner,uint8_t noteid) {
   if (!RUNNER->mainv) return -1;
+  if (rb_synth_node_config_find_link(runner->config,RB_MLT_FLDID_arg)<0) {
+    RUNNER->arg=RCONFIG->arg;
+  }
   if (RUNNER->argv) runner->update=_rb_mlt_runner_update_v;
   else runner->update=_rb_mlt_runner_update_s;
   return 0;
@@ -71,18 +75,19 @@ static int _rb_mlt_runner_init(struct rb_synth_node_runner *runner,uint8_t notei
  
 static const struct rb_synth_node_field _rb_mlt_fieldv[]={
   {
-    .fldid=RB_GAIN_FLDID_main,
+    .fldid=RB_MLT_FLDID_main,
     .name="main",
     .desc="Input and output.",
-    .flags=RB_SYNTH_NODE_FIELD_REQUIRED,
+    .flags=RB_SYNTH_NODE_FIELD_REQUIRED|RB_SYNTH_NODE_FIELD_BUF0IFNONE,
     .runner_offsetv=(uintptr_t)&((struct rb_synth_node_runner_mlt*)0)->mainv,
   },
   {
-    .fldid=RB_GAIN_FLDID_arg,
+    .fldid=RB_MLT_FLDID_arg,
     .name="arg",
     .desc="Operand, scalar or vector.",
     .config_offsetf=(uintptr_t)&((struct rb_synth_node_config_mlt*)0)->arg,
     .runner_offsetv=(uintptr_t)&((struct rb_synth_node_runner_mlt*)0)->argv,
+    .runner_offsetf=(uintptr_t)&((struct rb_synth_node_runner_mlt*)0)->arg,
   },
 };
 

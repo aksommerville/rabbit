@@ -10,7 +10,7 @@
 
 struct rb_srcmon {
   int fd;
-  int refresh;
+  int refresh; // set to scan all directories at the next update, or read during delivery to distinguish
   char *root;
   int rootc;
   struct rb_srcmon_watch {

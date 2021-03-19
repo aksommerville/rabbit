@@ -84,4 +84,6 @@ int rb_ftype_from_path(const char *path,int pathc);
 // We expect files named like "data/instrument/012-marimba.ins"
 int rb_id_from_basename(const char *base,int basec);
 
+void rb_dump_hex(const void *src,int srcc,const char *desc);
+
 #endif

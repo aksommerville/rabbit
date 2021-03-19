@@ -50,4 +50,18 @@ int rb_program_store_get_note(
   uint8_t programid,uint8_t noteid
 );
 
+/* Read content from the store.
+ * Asked for a config, we may decode it if we haven't done yet, and (decode) nonzero.
+ */
+int rb_program_store_get_serial(
+  void *dstpp_WEAK,
+  struct rb_program_store *store,
+  uint8_t programid
+);
+struct rb_synth_node_config *rb_program_store_get_config(
+  struct rb_program_store *store,
+  uint8_t programid,
+  int decode
+);
+
 #endif

@@ -8,6 +8,10 @@ static int rb_cli_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
   struct rb_cli *cli=audio->delegate.userdata;
   if (cli->synth) {
     if (rb_synth_update(v,c,cli->synth)<0) return -1;
+    if (cli->synth->messagec) {
+      fprintf(stderr,"synth error: %.*s\n",cli->synth->messagec,cli->synth->message);
+      rb_synth_clear_error(cli->synth);
+    }
   } else {
     memset(v,0,c<<1);
   }

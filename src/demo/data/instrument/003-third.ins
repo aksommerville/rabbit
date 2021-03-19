@@ -1,1 +1,60 @@
- 
+multiplex {
+
+0x0c~0x3f>0x00 instrument {
+  env = {
+    main~2;
+    mode=set;
+    content {
+      level=4;
+      00 00;
+      08 f0;
+      10 80;
+      80 00;
+    }
+  }
+
+  osc main~1, shape=sine, rate=9;
+  env = {
+    main~1;
+    content {
+      40 ff;
+      40 00;
+    }
+  }
+  mlt main~1, arg=0.01;
+  add main~1, arg=1.0;
+  mlt main~1, arg note;
+  fm rate~1, mod1=1.0, range~2;
+  
+  env {
+    time=1.5;
+    level=0.1;
+    02 ff 0;
+    04 40 0;
+    05 50 0;
+    10 38 0;
+    80 00 80;
+  }
+  
+  gain gain=28.0, clip=0.05;
+}
+
+0x40~0x7f instrument {
+  
+  harm = {
+    rate note;
+    coefv { c0 20 f0 00 00 10 20 90 }
+  }
+  
+  env {
+    time=1.5;
+    level=0.1;
+    02 ff 0;
+    04 40 0;
+    05 50 0;
+    10 38 0;
+    80 00 80;
+  }
+}
+
+}

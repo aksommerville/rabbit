@@ -96,13 +96,13 @@ static int dump_signal(struct rb_synth_node_config *config) {
 /* Test case: Generate an envelope and dump it.
  */
 
-RB_ITEST(generate_and_print_curve) {
+XXX_RB_ITEST(generate_and_print_curve) {
   wipe_mock_synth();
   uint8_t serial[]={
     RB_SYNTH_NTID_env,
       0x01,0x00, // main
-      0x02,RB_SYNTH_LINK_U8,0x01, // mode=set
-      0x03,RB_SYNTH_LINK_U8,RB_ENV_FLAG_PRESET
+      0x02,RB_SYNTH_FIELD_TYPE_U8,0x01, // mode=set
+      0x03,RB_SYNTH_FIELD_TYPE_U8,RB_ENV_FLAG_PRESET
         |RB_ENV_PRESET_RELEASE7
         ,
   };

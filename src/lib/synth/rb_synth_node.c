@@ -66,11 +66,11 @@ static int rb_synth_node_runner_link(
   int i=runner->config->linkc;
   for (;i-->0;link++) {
 
-    if (link->bufferid<RB_SYNTH_BUFFER_COUNT) {
-      if ((link->bufferid>=bufferc)||!bufferv[link->bufferid]) {
+    if (link->type<RB_SYNTH_BUFFER_COUNT) {
+      if ((link->type>=bufferc)||!bufferv[link->type]) {
         return rb_synth_error(runner->config->synth,
           "Failed to set %s.%s: Buffer %d was not provided.",
-          runner->config->type->name,link->field->name,link->bufferid
+          runner->config->type->name,link->field->name,link->type
         );
       }
       if (!link->field->runner_offsetv) {
@@ -79,14 +79,14 @@ static int rb_synth_node_runner_link(
           runner->config->type->name,link->field->name
         );
       }
-      *(rb_sample_t**)(((char*)runner)+link->field->runner_offsetv)=bufferv[link->bufferid];
+      *(rb_sample_t**)(((char*)runner)+link->field->runner_offsetv)=bufferv[link->type];
 
-    } else switch (link->bufferid) {
-      case RB_SYNTH_LINK_NOTEID: if (rb_synth_node_runner_assign(runner,link->field,noteid)<0) return -1; break;
-      case RB_SYNTH_LINK_NOTEHZ: if (rb_synth_node_runner_assign(runner,link->field,rb_rate_from_noteid(noteid))<0) return -1; break;
+    } else switch (link->type) {
+      case RB_SYNTH_FIELD_TYPE_NOTEID: if (rb_synth_node_runner_assign(runner,link->field,noteid)<0) return -1; break;
+      case RB_SYNTH_FIELD_TYPE_NOTEHZ: if (rb_synth_node_runner_assign(runner,link->field,rb_rate_from_noteid(noteid))<0) return -1; break;
       default: return rb_synth_error(runner->config->synth,
           "Unknown assignment mode 0x%02x for field %s.%s.",
-          link->bufferid,runner->config->type->name,link->field->name
+          link->type,runner->config->type->name,link->field->name
         );
     }
   }
@@ -201,7 +201,7 @@ struct rb_synth_node_config *rb_synth_node_config_new_decode(
 static int rb_synth_node_config_add_link(
   struct rb_synth_node_config *config,
   const struct rb_synth_node_field *field,
-  uint8_t bufferid
+  uint8_t type
 ) {
   //TODO We could check assignment supported here.
   // It will get checked at instantiation too, but this might be a more helpful spot for logging.
@@ -215,7 +215,7 @@ static int rb_synth_node_config_add_link(
   }
   struct rb_synth_node_link *link=config->linkv+config->linkc++;
   link->field=field;
-  link->bufferid=bufferid;
+  link->type=type;
   return 0;
 }
 
@@ -278,6 +278,74 @@ static int rb_synth_node_config_set_serial(
   return 0;
 }
 
+/* Decode field.
+ */
+ 
+int rb_synth_field_value_decode(struct rb_synth_field_value *dst,const void *src,int srcc) {
+  const uint8_t *SRC=src;
+  int srcp=0;
+  if (srcp>=srcc) return -1;
+  memset(dst,0,sizeof(struct rb_synth_field_value));
+  dst->type=SRC[srcp++];
+  
+  // All dynamic assignments are single bytes.
+  if (dst->type<0x80) {
+    dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_LINK;
+    return 1;
+  }
+  
+  switch (dst->type) {
+    case RB_SYNTH_FIELD_TYPE_S15_16: {
+        if (srcp>srcc-4) return -1;
+        int32_t n=(SRC[srcp]<<24)|(SRC[srcp+1]<<16)|(SRC[srcp+2]<<8)|SRC[srcp+3];
+        srcp+=4;
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_FLOAT;
+        dst->f=(rb_sample_t)n/65536.0f;
+      } break;
+    case RB_SYNTH_FIELD_TYPE_ZERO: {
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_FLOAT;
+        dst->f=0.0f;
+      } break;
+    case RB_SYNTH_FIELD_TYPE_ONE: {
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_FLOAT;
+        dst->f=1.0f;
+      } break;
+    case RB_SYNTH_FIELD_TYPE_NONE: {
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_FLOAT;
+        dst->f=-1.0f;
+      } break;
+    case RB_SYNTH_FIELD_TYPE_SERIAL1: {
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_SERIAL;
+        if (srcp>=srcc) return -1;
+        dst->c=SRC[srcp++];
+        dst->v=SRC+srcp;
+        if (srcp>srcc-dst->c) return -1;
+        srcp+=dst->c;
+      } break;
+    case RB_SYNTH_FIELD_TYPE_SERIAL2: {
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_SERIAL;
+        if (srcp>srcc-2) return -1;
+        dst->c=(SRC[srcp]<<8)|SRC[srcp+1];
+        srcp+=2;
+        dst->v=SRC+srcp;
+        if (srcp>srcc-dst->c) return -1;
+        srcp+=dst->c;
+      } break;
+    case RB_SYNTH_FIELD_TYPE_U8: {
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_INT;
+        if (srcp>=srcc) return -1;
+        dst->i=SRC[srcp++];
+      } break;
+    case RB_SYNTH_FIELD_TYPE_U0_8: {
+        dst->logtype=RB_SYNTH_FIELD_LOG_TYPE_FLOAT;
+        if (srcp>=srcc) return -1;
+        dst->f=SRC[srcp++]/255.0f;
+      } break;
+    default: return -1;
+  }
+  return srcp;
+}
+
 /* Decode config.
  */
  
@@ -304,62 +372,21 @@ int rb_synth_node_config_decode_partial(
       config->assigned|=mask;
     }
     
-    if (srcp>=srcc) {
-      // expected field format
-      return -1;
+    struct rb_synth_field_value value={0};
+    if ((err=rb_synth_field_value_decode(&value,SRC+srcp,srcc-srcp))<0) {
+      return rb_synth_error(config->synth,
+        "Failed to decode value for field %s.%s\n",
+        config->type->name,field->name
+      );
     }
-    uint8_t lead=SRC[srcp++];
-    if (lead<RB_SYNTH_BUFFER_COUNT) {
-      if (rb_synth_node_config_add_link(config,field,lead)<0) return -1;
-    } else switch (lead) {
-      case RB_SYNTH_LINK_NOTEID: if (rb_synth_node_config_add_link(config,field,lead)<0) return -1; break;
-      case RB_SYNTH_LINK_NOTEHZ: if (rb_synth_node_config_add_link(config,field,lead)<0) return -1; break;
-      
-      case RB_SYNTH_LINK_S15_16: {
-          if (srcp>srcc-4) return -1;
-          int32_t iv=(SRC[srcp]<<24)|(SRC[srcp+1]<<16)|(SRC[srcp+2]<<8)|SRC[srcp+3];
-          srcp+=4;
-          rb_sample_t v=iv/65536.0f;
-          if (rb_synth_node_config_set_scalar(config,field,v)<0) return -1;
-        } break;
-        
-      case RB_SYNTH_LINK_ZERO: if (rb_synth_node_config_set_scalar(config,field,0.0f)<0) return -1; break;
-      case RB_SYNTH_LINK_ONE: if (rb_synth_node_config_set_scalar(config,field,1.0f)<0) return -1; break;
-      case RB_SYNTH_LINK_NONE: if (rb_synth_node_config_set_scalar(config,field,-1.0f)<0) return -1; break;
-      
-      case RB_SYNTH_LINK_SERIAL1: {
-          if (srcp>srcc-1) return -1;
-          int len=SRC[srcp++];
-          if (srcp>srcc-len) return -1;
-          if (rb_synth_node_config_set_serial(config,field,SRC+srcp,len)<0) return -1;
-          srcp+=len;
-        } break;
-        
-      case RB_SYNTH_LINK_SERIAL2: {
-          if (srcp>srcc-2) return -1;
-          int len=(SRC[srcp]<<8)|SRC[srcp+1];
-          srcp+=2;
-          if (srcp>srcc-len) return -1;
-          if (rb_synth_node_config_set_serial(config,field,SRC+srcp,len)<0) return -1;
-          srcp+=len;
-        } break;
-        
-      case RB_SYNTH_LINK_U8: {
-          if (srcp>srcc-1) return -1;
-          int v=SRC[srcp++];
-          if (rb_synth_node_config_set_integer(config,field,v)<0) return -1;
-        } break;
-        
-      case RB_SYNTH_LINK_U0_8: {
-          if (srcp>srcc-1) return -1;
-          rb_sample_t v=SRC[srcp++]/255.0f;
-          if (rb_synth_node_config_set_scalar(config,field,v)<0) return -1;
-        } break;
-        
-      default: return rb_synth_error(config->synth,
-          "Unknown format 0x%02x for field %s.%s",
-          lead,config->type->name,field->name
-        );
+    srcp+=err;
+    
+    switch (value.logtype) {
+      case RB_SYNTH_FIELD_LOG_TYPE_LINK: if (rb_synth_node_config_add_link(config,field,value.type)<0) return -1; break;
+      case RB_SYNTH_FIELD_LOG_TYPE_FLOAT: if (rb_synth_node_config_set_scalar(config,field,value.f)<0) return -1; break;
+      case RB_SYNTH_FIELD_LOG_TYPE_INT: if (rb_synth_node_config_set_integer(config,field,value.i)<0) return -1; break;
+      case RB_SYNTH_FIELD_LOG_TYPE_SERIAL: if (rb_synth_node_config_set_serial(config,field,value.v,value.c)<0) return -1; break;
+      default: return -1;
     }
   }
   return srcp;
@@ -409,7 +436,7 @@ int rb_synth_node_config_find_link(const struct rb_synth_node_config *config,uin
   int i=config->linkc;
   for (;i-->0;link++) {
     if (link->field->fldid!=fldid) continue;
-    return link->bufferid;
+    return link->type;
   }
   return -1;
 }
@@ -419,7 +446,7 @@ int rb_synth_node_config_field_is_buffer(const struct rb_synth_node_config *conf
   int i=config->linkc;
   for (;i-->0;link++) {
     if (link->field->fldid!=fldid) continue;
-    return (link->bufferid<RB_SYNTH_BUFFER_COUNT);
+    return (link->type<RB_SYNTH_BUFFER_COUNT);
   }
   return 0;
 }

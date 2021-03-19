@@ -192,3 +192,37 @@ int rb_program_store_get_note(
   
   return 0;
 }
+
+/* Get content.
+ */
+ 
+int rb_program_store_get_serial(
+  void *dstpp_WEAK,
+  struct rb_program_store *store,
+  uint8_t programid
+) {
+  if (!store) return -1;
+  if (programid>=0x80) return -1;
+  if (dstpp_WEAK) *(void**)dstpp_WEAK=store->entryv[programid].serial;
+  return store->entryv[programid].serialc;
+}
+
+struct rb_synth_node_config *rb_program_store_get_config(
+  struct rb_program_store *store,
+  uint8_t programid,
+  int decode
+) {
+  if (!store) return 0;
+  if (programid>=0x80) return 0;
+  struct rb_program_entry *entry=store->entryv+programid;
+  if (!entry->config) {
+    if (!entry->serialc) return 0;
+    if (!(entry->config=rb_synth_node_config_new_decode(store->synth,entry->serial,entry->serialc))) {
+      free(entry->serial);
+      entry->serial=0;
+      entry->serialc=0;
+      return 0;
+    }
+  }
+  return entry->config;
+}

@@ -77,8 +77,8 @@ static void rb_instrument_set_bufmask_1(
   const struct rb_synth_node_link *link=child->linkv;
   int i=child->linkc;
   for (;i-->0;link++) {
-    if (link->bufferid<RB_SYNTH_BUFFER_COUNT) {
-      CONFIG->bufmask|=1<<link->bufferid;
+    if (link->type<RB_SYNTH_BUFFER_COUNT) {
+      CONFIG->bufmask|=1<<link->type;
     }
   }
 }
@@ -245,7 +245,8 @@ static const struct rb_synth_node_field _rb_instrument_fieldv[]={
     .fldid=RB_INSTRUMENT_FLDID_nodes,
     .name="nodes",
     .desc="Encoded child nodes, in order of operation.",
-    .flags=RB_SYNTH_NODE_FIELD_REQUIRED,
+    .flags=RB_SYNTH_NODE_FIELD_REQUIRED|RB_SYNTH_NODE_FIELD_PRINCIPAL,
+    .serialfmt=RB_SYNTH_SERIALFMT_NODES,
     .config_sets=_rb_instrument_set_nodes,
   },
 };

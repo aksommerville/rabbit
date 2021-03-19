@@ -154,7 +154,6 @@ static int rb_ossmidi_pollfd_add(struct rb_ossmidi *ossmidi,int fd) {
 static int rb_ossmidi_update_inotify(struct rb_ossmidi *ossmidi) {
   char buf[1024];
   int bufc=read(ossmidi->fd,buf,sizeof(buf));
-  fprintf(stderr,"%s read=%d\n",__func__,bufc);
   if (bufc<=0) {
     fprintf(stderr,"%.*s: Failed to read from inotify. Will not detect any new MIDI devices.\n",ossmidi->rootc,ossmidi->root);
     close(ossmidi->fd);
@@ -182,7 +181,6 @@ static int rb_ossmidi_update_inotify(struct rb_ossmidi *ossmidi) {
       }
     }
     if (!ok) continue;
-    fprintf(stderr,"%s base='%.*s'\n",__func__,basec,base);
     
     if (!subpathc) {
       if (ossmidi->rootc>sizeof(subpath)) return -1;
@@ -192,7 +190,6 @@ static int rb_ossmidi_update_inotify(struct rb_ossmidi *ossmidi) {
     if (subpathc+basec>=sizeof(subpath)) return -1;
     memcpy(subpath+subpathc,base,basec+1);
   
-    fprintf(stderr,"rb_ossmidi_add_device '%.*s'\n",subpathc+basec,subpath);
     if (rb_ossmidi_add_device(ossmidi,subpath,subpathc+basec)<0) return -1;
   }
   return 0;

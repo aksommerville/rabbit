@@ -366,7 +366,7 @@ static const struct rb_synth_node_field _rb_env_fieldv[]={
     .fldid=RB_ENV_FLDID_main,
     .name="main",
     .desc="Output.",
-    .flags=RB_SYNTH_NODE_FIELD_REQUIRED,
+    .flags=RB_SYNTH_NODE_FIELD_REQUIRED|RB_SYNTH_NODE_FIELD_BUF0IFNONE,
     .runner_offsetv=(uintptr_t)&((struct rb_synth_node_runner_env*)0)->mainv,
   },
   {
@@ -380,6 +380,8 @@ static const struct rb_synth_node_field _rb_env_fieldv[]={
     .fldid=RB_ENV_FLDID_content,
     .name="content",
     .desc="Main body of data, see etc/doc/audio-serial.txt. Short form, may set as integer.",
+    .flags=RB_SYNTH_NODE_FIELD_PRINCIPAL,
+    .serialfmt=RB_SYNTH_SERIALFMT_ENV,
     .config_sets=_rb_env_set_content,
     .config_offseti=(uintptr_t)&((struct rb_synth_node_config_env*)0)->seriali,
   },

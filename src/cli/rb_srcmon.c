@@ -347,8 +347,8 @@ int rb_srcmon_update(
   if (srcmon->fd<0) return 0; // defunct, whatever
   
   if (srcmon->refresh) {
-    srcmon->refresh=0;
     int err=rb_srcmon_scan(srcmon,cb_changed,userdata);
+    srcmon->refresh=0;
     if (err) return err;
   }
   

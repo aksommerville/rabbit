@@ -265,3 +265,21 @@ int rb_cli_update(struct rb_cli *cli) {
   usleep(10000);
   return 1;
 }
+
+/* Print hex dump.
+ */
+ 
+void rb_dump_hex(const void *src,int srcc,const char *desc) {
+  if (!src) srcc=0;
+  fprintf(stderr,"===== %s %d: %s =====\n",__func__,srcc,desc);
+  int srcp=0;
+  for (;srcp<srcc;srcp+=16) {
+    int i=0;
+    for (;i<16;i++) {
+      if (srcp+i>=srcc) break;
+      fprintf(stderr," %02x",((uint8_t*)src)[srcp+i]);
+    }
+    fprintf(stderr,"\n");
+  }
+  fprintf(stderr,"===== end\n");
+}

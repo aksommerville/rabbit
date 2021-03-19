@@ -74,7 +74,7 @@ static const struct rb_synth_node_field _rb_add_fieldv[]={
     .fldid=RB_GAIN_FLDID_main,
     .name="main",
     .desc="Input and output.",
-    .flags=RB_SYNTH_NODE_FIELD_REQUIRED,
+    .flags=RB_SYNTH_NODE_FIELD_REQUIRED|RB_SYNTH_NODE_FIELD_BUF0IFNONE,
     .runner_offsetv=(uintptr_t)&((struct rb_synth_node_runner_add*)0)->mainv,
   },
   {

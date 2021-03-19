@@ -1,6 +1,6 @@
 Rabbit Audio Serial Formats
 
-program store =========================================
+===== program store =========================================
 
 Deliver to rb_synth_configure().
 
@@ -14,7 +14,7 @@ Any number of:
     
 (programid) with high bit set are reserved for future use and are safely ignored today.
 
-env.content ===========================================
+===== env.content ===========================================
 
 High bit of first byte distinguishes Short Format from Long Format.
 
@@ -45,3 +45,16 @@ Long Format:
 By default, Long Format is 1 byte header plus 2 bytes per point.
 Can extend to 6 bytes header plus 5 bytes per point.
 ("Long" is relative).
+
+===== multiplex.notes ===========================================
+
+Any number of:
+  u8 srcnoteid (received from bus)
+  u8 count
+  u8 dstnoteid (delivered to inner node)
+  u8 ntid
+    ...fields, terminated with a leading zero *** terminator is required ***
+    
+Ranges must be sorted by (srcnoteid) and must not overlap.
+
+===== harm.coefv ===============================================

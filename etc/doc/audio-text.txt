@@ -1,0 +1,109 @@
+Rabbit Synth Text Format
+
+File names are significant:
+  .../instrument/PROGRAMID-COMMENT
+  .../PROGRAMID-COMMENT.ins
+  .../sound/SOUNDID-COMMENT
+  .../SOUNDID-COMMENT.snd
+SOUNDID is (PROGRAMID * 1000 + NOTEID).
+  
+The special keyword "help" can go pretty much anywhere,
+to abort compilation and print context-sensitive help to stderr.
+  
+===== Tokenization ================================
+
+Whitespace and comments serve only as a token break:
+  - Any byte <=0x20
+  - /* ... */
+  - /{ ...nestable... }/
+  - // to end of line
+  - # to end of line
+  
+Bytes >=0x7f are illegal except in comments.
+NB: Illegal even in strings.
+  
+Strings are bytes in 0x20..0x7e in matching unescaped quotes: " ' `
+Choice of quote is not significant.
+Backslash introduces an escape:
+  \\ \" \' \` Literal
+  \0          0x00 NUL
+  \t          0x09 HT
+  \n          0x0a LF
+  \r          0x0d CR
+  \xNN        Single byte, two hexadecimal digits.
+  \uNNNNNN;   UTF-8 sequence, 1..6 hexadecimal digits, semicolon optional.
+  
+Numbers are: 
+  [SIGN] WHOLE [.FRACT] [FMT]
+  SIGN is '+' or '-'.
+  WHOLE is /[0-9a-zA-Z]+/
+  FRACT is digits only; if present, WHOLE must be decimal.
+  FMT is /[us][0-9]+(\.[0-9]+)?/
+  WHOLE may begin with radix:
+    0b 0B  Binary
+    0o 0O  Octal
+    0d 0D  Decimal
+    0x 0X  Hexadecimal
+  For tokenization purposes, number is /[0-9+-][0-9a-zA-Z_.]*/
+    
+Identifiers are /[a-zA-Z_][0-9a-zA-Z_]*/
+
+Anything else is a single byte of punctuation.
+
+===== Statement ====================================
+
+All statements take this general form:
+
+KEYWORD [PARAMS] ;
+KEYWORD [PARAMS] { [STATEMENTS] }
+
+KEYWORD is an identifier, number, or string.
+  It usually identifies a node type or field, but may vary by context.
+
+PARAMS is any tokens other than: ; { }
+
+===== Node Statement ===================================
+
+TYPE [ASSIGNMENTS] ;
+TYPE [ASSIGNMENTS] { PRINCIPAL }
+TYPE = { FIELDS }
+
+ASSIGNMENTS is any number of:
+  KEY = VALUE [,]       // scalar or enum label
+  KEY ~ BUFFERID [,]    // buffer assignment
+  KEY noteid [,]        // noteid 0..127 as scalar
+  KEY note [,]          // note in hertz as scalar
+  
+PRINCIPAL is serial data for one specially-marked field of the node type.
+
+FIELDS is any number of statements, same as ASSIGNMENTS but also allowing serial values:
+  KEY { INFERRED_FORMAT }
+  KEY node NODE_STATEMENT
+  KEY nodes { [NODE_STATEMENTS] }
+  KEY env { [ENV_STATEMENTS] }
+  KEY coefv { [HEX_BYTES] }
+  
+===== Env Statement ======================================
+
+If any of these is present, encodes to Short Form:
+  attack = 0..3 ;
+  decay = 0..3 ;
+  release = 0..7 ;
+
+Otherwise Long Form:
+  time = NUMBER ;  // u2.6, time scale, default 1
+  level = NUMBER ; // u16.8, level scale, default 1
+  signed_level ;   // If present, LEVEL are signed
+  TIME LEVEL [CURVE] ;
+    TIME and LEVEL are unprefixed hexadecimal integers, 2 or 4 digits.
+    The digit counts must be consistent for all points (TIME and LEVEL may use different sizes).
+    The first point is allowed to use TIME zero; all other TIME must be nonzero.
+    CURVE is an integer -128..127. Must be on every point, or on none.
+    At least one nonzero-time point is required.
+    
+===== Multiplex Statement ================================
+
+SRCNOTEID [~ SRCNOTEID_MAX] [> DSTNOTEID] NODE
+
+The 1..3 noteid parameters are integers 0..127.
+Both optional params default to SRCNOTEID if absent, ie a single note with the same value inside and out.

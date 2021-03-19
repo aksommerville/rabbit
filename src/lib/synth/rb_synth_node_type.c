@@ -15,6 +15,8 @@ static const struct rb_synth_node_type *rb_synth_node_typev[256]={
   _(add)
   _(mlt)
   _(fm)
+  _(harm)
+  _(multiplex)
 #undef _
 };
 
@@ -75,6 +77,7 @@ int rb_synth_node_type_validate(const struct rb_synth_node_type *type) {
   if (type->fieldc<0) return -1;
   if (type->fieldc>0) {
     if (!type->fieldv) return -1;
+    int have_principal=0;
     int fldidmin=1; // fldid zero illegal
     const struct rb_synth_node_field *field=type->fieldv;
     int i=type->fieldc;
@@ -86,6 +89,16 @@ int rb_synth_node_type_validate(const struct rb_synth_node_type *type) {
       if (field->flags&RB_SYNTH_NODE_FIELD_REQUIRED) {
         // REQUIRED fields may only have id 1..32
         if ((field->fldid<1)||(field->fldid>32)) return -1;
+      }
+      if (field->flags&RB_SYNTH_NODE_FIELD_PRINCIPAL) {
+        // PRINCIPAL may only appear once, and must accept serial constants.
+        if (have_principal) return -1;
+        have_principal=1;
+        if (!field->config_sets) return -1;
+      }
+      if (field->flags&RB_SYNTH_NODE_FIELD_BUF0IFNONE) {
+        // If they want buffer zero, they must provide a place for it.
+        if (!field->runner_offsetv) return -1;
       }
       
       // Offsets must be in the custom zone.
@@ -135,6 +148,15 @@ const struct rb_synth_node_field *rb_synth_node_field_by_name(const struct rb_sy
     if (memcmp(field->name,name,namec)) continue;
     if (field->name[namec]) continue;
     return field;
+  }
+  return 0;
+}
+
+const struct rb_synth_node_field *rb_synth_node_principal_field(const struct rb_synth_node_type *type) {
+  const struct rb_synth_node_field *field=type->fieldv;
+  int i=type->fieldc;
+  for (;i-->0;field++) {
+    if (field->flags&RB_SYNTH_NODE_FIELD_PRINCIPAL) return field;
   }
   return 0;
 }

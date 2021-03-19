@@ -1,0 +1,4 @@
+instrument {
+  osc rate=521 shape=sawdown; 
+  env { attack=0; decay=1; release=7; }
+}

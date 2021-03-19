@@ -4,16 +4,25 @@
 
 RB_ITEST(expect_known_builtin_nodes) {
 
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_noop))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_instrument))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_beep))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_gain))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_osc))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_env))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_add))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_mlt))
-  RB_ASSERT(rb_synth_node_type_by_id(RB_SYNTH_NTID_fm))
-  int expected_type_count=9;
+  int expected_type_count=0;
+  #define _(tag) { \
+    const struct rb_synth_node_type *type=rb_synth_node_type_by_id(RB_SYNTH_NTID_##tag); \
+    RB_ASSERT(type,"%s",#tag) \
+    RB_ASSERT_INTS(type->ntid,RB_SYNTH_NTID_##tag,"%s",#tag) \
+    expected_type_count++; \
+  }
+  _(noop)
+  _(instrument)
+  _(beep)
+  _(gain)
+  _(osc)
+  _(env)
+  _(add)
+  _(mlt)
+  _(fm)
+  _(multiplex)
+  _(harm)
+  #undef _
 
   int actual=0;
   for (;;actual++) {

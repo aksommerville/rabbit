@@ -112,8 +112,12 @@ static void _rb_fm_update_universal(struct rb_synth_node_runner *runner,int c) {
 static int _rb_fm_runner_init(struct rb_synth_node_runner *runner,uint8_t noteid) {
   if (!RUNNER->mainv) return -1;
   
-  //TODO permit config-assigned rate
-  RUNNER->ratek=(RUNNER->ratek*M_PI*2.0f)/runner->config->synth->rate;
+  if (rb_synth_node_config_find_link(runner->config,RB_FM_FLDID_rate)<0) {
+    RUNNER->ratek=RCONFIG->rate;
+  } else if (RUNNER->ratev) {
+  } else {
+    RUNNER->ratek=(RUNNER->ratek*M_PI*2.0f)/runner->config->synth->rate;
+  }
   RUNNER->ratek=fmodf(RUNNER->ratek,M_PI*2.0f); // SAMPLETYPE
   if (RUNNER->ratek<0.0f) RUNNER->ratek+=M_PI*2.0f;
   
@@ -130,7 +134,7 @@ static const struct rb_synth_node_field _rb_fm_fieldv[]={
     .fldid=RB_FM_FLDID_main,
     .name="main",
     .desc="Output.",
-    .flags=RB_SYNTH_NODE_FIELD_REQUIRED,
+    .flags=RB_SYNTH_NODE_FIELD_REQUIRED|RB_SYNTH_NODE_FIELD_BUF0IFNONE,
     .runner_offsetv=(uintptr_t)&((struct rb_synth_node_runner_fm*)0)->mainv,
   },
   {
@@ -163,6 +167,7 @@ static const struct rb_synth_node_field _rb_fm_fieldv[]={
 };
 
 const struct rb_synth_node_type rb_synth_node_type_fm={
+  .ntid=RB_SYNTH_NTID_fm,
   .name="fm",
   .desc="General-purpose FM synthesizer.",
   .config_objlen=sizeof(struct rb_synth_node_config_fm),
