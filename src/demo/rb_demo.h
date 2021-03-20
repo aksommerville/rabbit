@@ -10,13 +10,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RB_DEFAULT_DEMO_NAME "midiin"
+#define RB_DEFAULT_DEMO_NAME "vmgr"
 
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \
   _(xform) \
   _(midiin) \
-  _(midiredline)
+  _(midiredline) \
+  _(vmgr)
   
 /* Define these things before including this header, if you don't want the defaults.
  */
@@ -37,6 +38,7 @@
 extern struct rb_video *rb_demo_video;
 extern struct rb_audio *rb_demo_audio;
 extern struct rb_framebuffer rb_demo_fb;
+extern struct rb_framebuffer *rb_demo_override_fb; // demo may set this to provide its own fb
 extern struct rb_synth *rb_demo_synth;
 extern int rb_demo_mousex;
 extern int rb_demo_mousey;

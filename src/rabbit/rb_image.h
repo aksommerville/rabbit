@@ -1,8 +1,8 @@
-/* rb_framebuffer.h
+/* rb_image.h
  */
  
-#ifndef RB_FRAMEBUFFER_H
-#define RB_FRAMEBUFFER_H
+#ifndef RB_IMAGE_H
+#define RB_IMAGE_H
 
 /* There are 8 transforms when blitting,
  * which are neatly summarized in 3 bits.

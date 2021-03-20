@@ -13,6 +13,7 @@ static volatile int rb_sigc=0;
 static volatile int rb_terminate=0;
 struct rb_video *rb_demo_video=0;
 struct rb_framebuffer rb_demo_fb={0};
+struct rb_framebuffer *rb_demo_override_fb=0;
 struct rb_audio *rb_demo_audio=0;
 struct rb_synth *rb_demo_synth=0;
 int rb_demo_mousex=0;
@@ -216,7 +217,9 @@ static int rb_demo_main() {
         fprintf(stderr,"Updating video driver '%s' failed\n",rb_demo_video->type->name);
         return -1;
       }
-      if (rb_video_swap(rb_demo_video,&rb_demo_fb)<0) {
+      struct rb_framebuffer *fb=&rb_demo_fb;
+      if (rb_demo_override_fb) fb=rb_demo_override_fb;
+      if (rb_video_swap(rb_demo_video,fb)<0) {
         fprintf(stderr,"Video '%s': swap failed\n",rb_demo_video->type->name);
         return -1;
       }
