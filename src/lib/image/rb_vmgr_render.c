@@ -61,7 +61,7 @@ static void rb_vmgr_render_background(struct rb_vmgr *vmgr) {
   int row=rowa; for (;row<=rowz;row++,dsty+=rowh,cellrowv+=vmgr->grid->w) {
     const uint8_t *cellv=cellrowv;
     int dstx=dstx0;
-    int col=colz; for (;col<=colz;col++,dstx+=colw,cellv++) {
+    int col=cola; for (;col<=colz;col++,dstx+=colw,cellv++) {
       int srcx=((*cellv)&15)*colw;
       int srcy=((*cellv)>>4)*rowh;
       rb_framebuffer_blit_safe(

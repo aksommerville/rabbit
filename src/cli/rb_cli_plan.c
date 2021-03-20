@@ -94,7 +94,7 @@ static int rb_cli_plan_cb_image(
   int subpathc=pathc-context->srcdirlen;
   
   fprintf(context->dstf,"DATAMIDFILES+=$(DATAMIDDIR)/%.*s\n",subpathc,subpath);
-  fprintf(context->dstf,"$(DATAMIDDIR)/%.*s:%.*s;$(PRECMD) cp $< $@\n",subpathc,subpath,pathc,path);
+  fprintf(context->dstf,"$(DATAMIDDIR)/%.*s:%.*s $(EXE_CLI);$(PRECMD) $(EXE_CLI) imagec --dst=$@ --data=$<\n",subpathc,subpath,pathc,path);
   
   return 0;
 }

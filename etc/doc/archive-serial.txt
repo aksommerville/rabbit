@@ -1,0 +1,26 @@
+Rabbit Archive Format
+
+Entire file is compressed with zlib.
+We'll discuss the uncompressed content.
+
+No global header.
+
+Any number of records:
+  vlq id delta
+  vlq length
+  ... content
+  
+A 4-byte (id delta) with all 4 high bits set (ie 0x80808080) is a type change.
+That would be invalid as VLQ, so it can't be confused with a real id.
+Strip the high bits from those 4 bytes, and that is the type id for all subsequent records.
+Archive should begin with a type change; otherwise the initial types are zero.
+
+All types defined by Rabbit will consist of lowercase letters, digits, or underscore.
+
+Types:
+  imag Image (PNG; maybe other format?)
+  song Song (MIDI)
+  snth Synth program
+  grid Grid
+  text Loose text
+  data Unspecified binary data

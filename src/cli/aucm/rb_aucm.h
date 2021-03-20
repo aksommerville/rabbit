@@ -6,6 +6,8 @@
 #ifndef RB_AUCM_H
 #define RB_AUCM_H
 
+struct rb_encoder;
+
 #define RB_CM_FULLY_LOGGED -2
 
 /* Produce an encoded synth archive containing one program.
@@ -32,5 +34,16 @@ int rb_sound_compile(
   int programc,
   const char *path
 );
+
+/* Support for combining multiplex programs.
+ * In all cases, (b) overrides (a).
+ * "add_archive_to_program" sounds backward, but is in fact the way aucm needs it.
+ * These are only guaranteed to produce valid output for single-note ranges; that's the only thing we use them for.
+ * We fail if any fields exist other than principal ranges.
+ */
+int rb_multiplex_combine_archives(struct rb_encoder *dst,const void *a,int ac,const void *b,int bc); // complete archives
+int rb_multiplex_combine_programs(struct rb_encoder *dst,const void *a,int ac,const void *b,int bc); // from ntid on
+int rb_multiplex_combine_fields(struct rb_encoder *dst,const void *a,int ac,const void *b,int bc); // just the principal field content
+int rb_multiplex_add_archive_to_program(struct rb_encoder *dst,const void *a,int ac,const void *b,int bc); // emits archive
 
 #endif

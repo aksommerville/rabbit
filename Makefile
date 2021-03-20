@@ -4,7 +4,7 @@ PRECMD=echo "  $(@F)" ; mkdir -p $(@D) ;
 
 CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit
 LD:=gcc
-LDPOST:=-lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lpthread
+LDPOST:=-lz -lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lpthread
 AR:=ar rc
 
 GENERATED_FILES:=$(addprefix mid/, \

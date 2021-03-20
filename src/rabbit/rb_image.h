@@ -51,6 +51,20 @@ struct rb_image *rb_image_new(int w,int h);
 void rb_image_del(struct rb_image *image);
 int rb_image_ref(struct rb_image *image);
 
+/* Our images are encoded in a pretty simple format for easy loading.
+ * Starts with a 32-bit header:
+ *   ff000000 format
+ *   00fff000 width-1
+ *   00000fff height-1
+ * Then pixels, rows padded to one byte.
+ */
+struct rb_image *rb_image_new_decode(const void *src,int srcc);
+#define RB_IMAGE_FORMAT_RGBA    0x01 /* 32-bit RGBA */
+#define RB_IMAGE_FORMAT_RGB     0x02 /* Opaque 24-bit RGB */
+#define RB_IMAGE_FORMAT_RGBCK   0x03 /* 24-bit RGB and pure black is transparent */
+#define RB_IMAGE_FORMAT_A8      0x04 /* 8-bit alpha */
+#define RB_IMAGE_FORMAT_A1      0x05 /* 1-bit alpha */
+
 /* Rendering.
  ********************************************************/
 

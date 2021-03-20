@@ -19,6 +19,7 @@ void rb_cli_print_usage(struct rb_cli *cli) {
     "  plan         Generate a Makefile to rebuild the archive.\n"
     "  archive      Pack finished data files into one archive.\n"
     "  synthc       Compile one instrument or sound effect.\n"
+    "  imagec       Convert one PNG file to our internal format.\n"
     "\n"
     "OPTIONS:\n"
     "  --audio=NAME    [%s] Audio driver.\n"
@@ -69,6 +70,7 @@ static int rb_cli_command_eval(const char *src) {
   _(plan)
   _(archive)
   _(synthc)
+  _(imagec)
   
   #undef _
   return -1;

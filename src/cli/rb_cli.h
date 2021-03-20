@@ -17,6 +17,7 @@ struct rb_ossmidi;
 #define RB_CLI_COMMAND_plan    3
 #define RB_CLI_COMMAND_archive 4
 #define RB_CLI_COMMAND_synthc  5
+#define RB_CLI_COMMAND_imagec  6
  
 struct rb_cli {
 // argv:
@@ -71,6 +72,7 @@ int rb_cli_main_synth(struct rb_cli *cli);
 int rb_cli_main_plan(struct rb_cli *cli);
 int rb_cli_main_archive(struct rb_cli *cli);
 int rb_cli_main_synthc(struct rb_cli *cli);
+int rb_cli_main_imagec(struct rb_cli *cli);
 
 /* Helpers for serial data.
  ************************************************************/
