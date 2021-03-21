@@ -38,6 +38,9 @@ struct rb_video_glx {
   int focus;
   
   GLuint texid;
+  
+  int dstx,dsty,dstw,dsth;
+  int dstdirty;
 };
 
 #define VIDEO ((struct rb_video_glx*)video)

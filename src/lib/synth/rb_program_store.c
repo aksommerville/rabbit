@@ -101,6 +101,15 @@ int rb_program_store_configure(struct rb_program_store *store,const void *src,in
   return 0;
 }
 
+/* Load one program.
+ */
+ 
+int rb_program_store_load_program(struct rb_program_store *store,uint8_t programid,const void *src,int srcc) {
+  if (programid>=0x80) return 0;
+  if (rb_program_store_receive_serial(store,programid,src,srcc)<0) return -1;
+  return 0;
+}
+
 /* Drop configuration.
  */
  

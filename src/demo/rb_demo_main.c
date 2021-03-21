@@ -159,6 +159,7 @@ static int rb_demo_init() {
       .cb_close=rb_demo_cb_close,
       .cb_mmotion=rb_demo_cb_mmotion,
       .cb_mbutton=rb_demo_cb_mbutton,
+      .fullscreen=0,
     };
     if (!(rb_demo_video=rb_video_new(0,&delegate))) {
       fprintf(stderr,"Failed to initialize default video driver.\n");
@@ -223,9 +224,10 @@ static int rb_demo_main() {
         fprintf(stderr,"Video '%s': swap failed\n",rb_demo_video->type->name);
         return -1;
       }
+    } else {
+      //TODO Need a global timing regulator.
+      usleep(10000);
     }
-    //TODO Need a global timing regulator.
-    usleep(10000);
 
     rb_demo_framec++;
   }

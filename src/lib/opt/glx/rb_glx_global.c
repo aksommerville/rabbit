@@ -106,6 +106,7 @@ static int _rb_glx_init(struct rb_video *video) {
 
   VIDEO->cursor_visible=1;
   VIDEO->focus=1;
+  VIDEO->dstdirty=1;
   
   if (!(VIDEO->dpy=XOpenDisplay(0))) {
     return -1;
@@ -146,13 +147,78 @@ static void _rb_glx_del(struct rb_video *video) {
   }
 }
 
+/* Select framebuffer's output bounds.
+ */
+ 
+static void rb_glx_recalculate_output_bounds(struct rb_video *video) {
+  
+  if ((video->winw<1)||(video->winh<1)) {
+    VIDEO->dstx=0;
+    VIDEO->dsty=0;
+    VIDEO->dstw=video->winw;
+    VIDEO->dsth=video->winh;
+  } else {
+  
+    int wforh=(video->winh*RB_FB_W)/RB_FB_H;
+    if (wforh<=video->winw) {
+      VIDEO->dstw=wforh;
+      VIDEO->dsth=video->winh;
+    } else {
+      VIDEO->dstw=video->winw;
+      VIDEO->dsth=(video->winw*RB_FB_H)/RB_FB_W;
+    }
+    
+    // If we're scaling up between 1x and 3x, snap down to the nearest integer multiple, to avoid ugly scaling artifacts.
+    double prop=(double)VIDEO->dstw/(double)RB_FB_W;
+    if ((prop>1.0)&&(prop<3.0)) {
+      if (prop>=2.0) {
+        VIDEO->dstw=RB_FB_W*2;
+        VIDEO->dsth=RB_FB_H*2;
+      } else {
+        VIDEO->dstw=RB_FB_W;
+        VIDEO->dsth=RB_FB_H;
+      }
+    }
+  
+    // If we're scaling at least 3x, and the shortened axis is pretty close, cheat it out.
+    // This shouldn't be a big deal aesthetically, but it lets us avoid clearing GL's framebuffer before each copy.
+    if (prop>=3.0) {
+      const double CHEESE_FACTOR=0.02;
+      int xdiff=video->winw-VIDEO->dstw;
+      int ydiff=video->winh-VIDEO->dsth;
+      if (xdiff) {
+        double relmargin=(double)xdiff/(double)video->winw;
+        if (relmargin<=CHEESE_FACTOR) {
+          VIDEO->dstw=video->winw;
+        }
+      } else if (ydiff) {
+        double relmargin=(double)ydiff/(double)video->winh;
+        if (relmargin<=CHEESE_FACTOR) {
+          VIDEO->dsth=video->winh;
+        }
+      }
+    }
+    
+    VIDEO->dstx=(video->winw>>1)-(VIDEO->dstw>>1);
+    VIDEO->dsty=(video->winh>>1)-(VIDEO->dsth>>1);
+  }
+}
+
 /* Frame control.
  */
 
 static int _rb_glx_swap(struct rb_video *video,struct rb_framebuffer *fb) {
 
-  glViewport(0,0,video->winw,video->winh);
-  //TODO use projection matrix to set output box -- preserve fb's aspect ratio
+  if (VIDEO->dstdirty) {
+    rb_glx_recalculate_output_bounds(video);
+    VIDEO->dstdirty=0;
+  }
+  if ((VIDEO->dstx>0)||(VIDEO->dsty>0)) {
+    glViewport(0,0,video->winw,video->winh);
+    glClearColor(0.0f,0.0f,0.0f,1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
+  glViewport(VIDEO->dstx,VIDEO->dsty,VIDEO->dstw,VIDEO->dsth);
 
   glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,RB_FB_W,RB_FB_H,0,GL_BGRA,GL_UNSIGNED_BYTE,fb->v);
   glBegin(GL_TRIANGLE_STRIP);

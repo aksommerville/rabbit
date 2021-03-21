@@ -29,6 +29,7 @@ int rb_program_store_ref(struct rb_program_store *store);
  * (programid>=0x80) are reserved for future use and will be ignored here.
  */
 int rb_program_store_configure(struct rb_program_store *store,const void *src,int srcc);
+int rb_program_store_load_program(struct rb_program_store *store,uint8_t programid,const void *src,int srcc);
 int rb_program_store_unconfigure(struct rb_program_store *store);
 
 /* Drop any live objects which might depend on the global output rate.

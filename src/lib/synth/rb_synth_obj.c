@@ -105,6 +105,11 @@ int rb_synth_configure(struct rb_synth *synth,const void *src,int srcc) {
   return 0;
 }
 
+int rb_synth_load_program(struct rb_synth *synth,uint8_t programid,const void *src,int srcc) {
+  if (rb_program_store_load_program(synth->program_store,programid,src,srcc)<0) return -1;
+  return 0;
+}
+
 int rb_synth_unconfigure(struct rb_synth *synth) {
   if (rb_program_store_unconfigure(synth->program_store)<0) return -1;
   return 0;

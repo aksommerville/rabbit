@@ -248,7 +248,6 @@ static int rb_env_decode_long(struct rb_synth_node_config *config,const uint8_t 
   
   int (*rdtime)(rb_sample_t *dst,const uint8_t *src,int srcc,rb_sample_t range);
   int (*rdlevel)(rb_sample_t *dst,const uint8_t *src,int srcc,rb_sample_t range);
-  fprintf(stderr,"flags=%02x HIRES_TIME=%02x\n",flags,RB_ENV_FLAG_HIRES_TIME);
   if (flags&RB_ENV_FLAG_HIRES_TIME) rdtime=rb_env_decode_scalar_u16;
   else rdtime=rb_env_decode_scalar_u8;
   if (flags&RB_ENV_FLAG_SIGNED_LEVEL) {

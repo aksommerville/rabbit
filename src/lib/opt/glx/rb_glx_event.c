@@ -81,6 +81,7 @@ static int rb_glx_evt_configure(struct rb_video *video,XConfigureEvent *evt) {
   if ((nw!=video->winw)||(nh!=video->winh)) {
     video->winw=nw;
     video->winh=nh;
+    VIDEO->dstdirty=1;
     if (video->delegate.cb_resize) {
       if (video->delegate.cb_resize(video)<0) {
         return -1;

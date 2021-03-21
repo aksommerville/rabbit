@@ -61,6 +61,7 @@ int rb_synth_reinit(struct rb_synth *synth,int rate,int chanc);
  * "unconfigure" to drop all prior config data.
  */
 int rb_synth_configure(struct rb_synth *synth,const void *src,int srcc);
+int rb_synth_load_program(struct rb_synth *synth,uint8_t programid,const void *src,int srcc);
 int rb_synth_unconfigure(struct rb_synth *synth);
 
 /* (c) in samples regardless of chanc -- not frames, not bytes.
