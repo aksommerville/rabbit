@@ -25,7 +25,7 @@ void rb_cli_print_usage(struct rb_cli *cli) {
     "  --audio=NAME    [%s] Audio driver.\n"
     "  --rate=HZ       [44100] Audio output rate.\n"
     "  --chanc=COUNT   [1] Audio channel count.\n"
-    "  --data=PATH     [src/demo/data] Directory containing data input files.\n"
+    "  --data=PATH     [src/data] Directory containing data input files.\n"
     "  --dst=PATH      [] Output file.\n"
     "\n"
   ,cli->exename
@@ -55,7 +55,7 @@ static void rb_cli_set_defaults(struct rb_cli *cli) {
   cli->command=RB_CLI_COMMAND_UNSET;
   cli->audiorate=44100;
   cli->audiochanc=1;
-  cli->datapath="src/demo/data";
+  cli->datapath="src/data";
 }
 
 /* Command.

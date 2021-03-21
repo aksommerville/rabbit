@@ -1,21 +1,54 @@
-instrument {
-  env = {
-    main~1;
-    mode=set;
-    content {
-      level=6.0;
-      00 ff;
-      10 c0;
-      40 d0;
-      ff 00;
+multiplex {
+  0x00~0x37 instrument {
+    env = {
+      main~1;
+      mode=set;
+      content {
+        level=6.0;
+        00 ff;
+        10 c0;
+        40 d0;
+        ff 00;
+      }
+    }
+    fm rate note, mod1=0.5, range~1;
+    env {
+      time=0.75;
+      level=0.15;
+      0100 ff 50;
+      0800 80 0;
+      f000 00 110;
     }
   }
-  fm rate note, mod1=2, range~1;
-  env {
-    time=0.75;
-    level=0.15;
-    0100 ff 50;
-    0800 80 0;
-    f000 00 110;
+  
+  0x38~0x43 instrument {
+    osc rate note, shape=sawup;
+    env { attack=0; }
+  }
+  
+  0x44~0x7f instrument {
+  
+    osc main~1, shape=sine rate=5;
+    mlt main~1 arg=0.005;
+    add main~1, arg=1;
+    mlt main~1, arg note;
+    fm main~0, rate~1, mod1=1.0, range=3;
+  
+    osc main~1, shape=sine rate=5, phase=0.5;
+    mlt main~1 arg=0.005;
+    add main~1, arg=1;
+    mlt main~1, arg note;
+    fm main~2, rate~1, mod1=1.0, range=3;
+    
+    add main~0, arg~2;
+    
+    env {
+      level=0.10;
+      02 ff 0;
+      0c 80 0;
+      70 00 40;
+    }
+    
+    //gain gain=4.0 clip=0.05;
   }
 }

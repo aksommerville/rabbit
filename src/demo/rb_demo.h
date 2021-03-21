@@ -1,7 +1,7 @@
 #ifndef RB_DEMO_H
 #define RB_DEMO_H
 
-#include "rabbit/rabbit.h"
+#include "rabbit/rb_internal.h"
 #include "rabbit/rb_video.h"
 #include "rabbit/rb_audio.h"
 #include "rabbit/rb_image.h"
@@ -10,14 +10,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RB_DEFAULT_DEMO_NAME "vmgr"
+#define RB_DEFAULT_DEMO_NAME "input_drivers"
 
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \
   _(xform) \
   _(midiin) \
   _(midiredline) \
-  _(vmgr)
+  _(vmgr) \
+  _(input_drivers)
   
 /* Define these things before including this header, if you don't want the defaults.
  */
