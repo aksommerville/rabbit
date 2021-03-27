@@ -19,6 +19,6 @@
 - [ ] Global timing regulator
 - [ ] Song store in synth. Or should we add a generic asset store for that?
 - [ ] Consistently getting video tearing (glx), usually near the top of the window
-- [ ] Pre-render grid in vmgr
+- [x] Pre-render grid in vmgr
 - [ ] Render primitives
 - [ ] Lighting

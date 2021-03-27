@@ -2,12 +2,83 @@
 #include "rabbit/rb_vmgr.h"
 #include "rabbit/rb_grid.h"
 #include "rabbit/rb_sprite.h"
-
+ 
 /* Fill framebuffer with black.
  */
  
 static void rb_vmgr_color_background(struct rb_vmgr *vmgr) {
   memset(vmgr->fb->pixels,0,RB_FB_SIZE_BYTES);
+}
+
+/* Redraw bgbits from scratch.
+ */
+ 
+static inline void rb_vmgr_refresh_bgbits(
+  struct rb_vmgr *vmgr,
+  struct rb_image *tilesheet,
+  int colw,int rowh,
+  int worldw,int worldh
+) {
+
+  // Line up bgbits on a cell boundary within world limits, containing the current view.
+  // It will never exceed the left or top world bounds but may exceed right or bottom (if the world is tiny).
+  vmgr->bgbitsx=vmgr->scrollx-colw;
+  if (vmgr->bgbitsx>worldw-vmgr->bgbits->w) vmgr->bgbitsx=worldw-vmgr->bgbits->w;
+  if (vmgr->bgbitsx<0) vmgr->bgbitsx=0;
+  vmgr->bgbitsx-=vmgr->bgbitsx%colw;
+  vmgr->bgbitsy=vmgr->scrolly-rowh;
+  if (vmgr->bgbitsy>worldh-vmgr->bgbits->h) vmgr->bgbitsy=worldh-vmgr->bgbits->h;
+  if (vmgr->bgbitsy<0) vmgr->bgbitsy=0;
+  vmgr->bgbitsy-=vmgr->bgbitsy%rowh;
+  
+  int cola=vmgr->bgbitsx/colw;
+  int colz=(vmgr->bgbitsx+vmgr->bgbits->w-1)/colw;
+  if (colz>=vmgr->grid->w) colz=vmgr->grid->w-1;
+  int rowa=vmgr->bgbitsy/rowh;
+  int rowz=(vmgr->bgbitsy+vmgr->bgbits->h-1)/rowh;
+  if (rowz>=vmgr->grid->h) rowz=vmgr->grid->h-1;
+  
+  const uint8_t *src=vmgr->grid->v+rowa*vmgr->grid->w+cola;
+  int dsty=0,row=rowa;
+  for (;row<=rowz;row++,src+=vmgr->grid->w,dsty+=rowh) {
+    const uint8_t *p=src;
+    int dstx=0,col=cola;
+    for (;col<=colz;col++,p++,dstx+=colw) {
+      int srcx=((*p)&15)*colw;
+      int srcy=((*p)>>4)*rowh;
+      rb_image_blit_safe(
+        vmgr->bgbits,dstx,dsty,
+        tilesheet,srcx,srcy,
+        colw,rowh,
+        0,0,0
+      );
+    }
+  }
+}
+
+/* Check whether bgbits still contains the view.
+ * If not, make it so.
+ */
+ 
+static inline void rb_vmgr_update_bgbits(
+  struct rb_vmgr *vmgr,
+  struct rb_image *tilesheet,
+  int colw,int rowh,
+  int worldw,int worldh
+) {
+  //TODO We could optimize this even further with rb_image_scroll(), and draw only the necessary part.
+  // I feel like that's overkill; copying opaque tiles is pretty cheap.
+  // Our main interest here is don't redraw the grid while the camera stands still.
+  // Experimentally, this not-quite-optimal approach reduces load about 7x in a worst-case test.
+  // I estimate balls-to-the-wall optimization would yield more like 10x.
+  if (
+    (vmgr->scrollx<vmgr->bgbitsx)||
+    (vmgr->scrolly<vmgr->bgbitsy)||
+    (vmgr->scrollx+RB_FB_W>vmgr->bgbitsx+vmgr->bgbits->w)||
+    (vmgr->scrolly+RB_FB_H>vmgr->bgbitsy+vmgr->bgbits->h)
+  ) {
+    rb_vmgr_refresh_bgbits(vmgr,tilesheet,colw,rowh,worldw,worldh);
+  }
 }
 
 /* Background: Grid or black.
@@ -40,38 +111,21 @@ static void rb_vmgr_render_background(struct rb_vmgr *vmgr) {
     rb_vmgr_color_background(vmgr);
   }
   
-  //TODO Optimization: Keep a grid image, larger than the framebuffer, and redraw tiles only when the view moves.
-  
-  // Determine which cells need drawn.
-  int cola=vmgr->scrollx/colw;
-  int rowa=vmgr->scrolly/rowh;
-  int colz=(vmgr->scrollx+RB_FB_W-1)/colw;
-  int rowz=(vmgr->scrolly+RB_FB_H-1)/rowh;
-  if (cola<0) cola=0;
-  if (colz>=vmgr->grid->w) colz=vmgr->grid->w-1;
-  if (cola>colz) return;
-  if (rowa<0) rowa=0;
-  if (rowz>=vmgr->grid->h) rowz=vmgr->grid->h-1;
-  if (rowa>rowz) return;
-  
-  // Draw tiles.
-  const uint8_t *cellrowv=vmgr->grid->v+rowa*vmgr->grid->w+cola;
-  int dstx0=cola*colw-vmgr->scrollx;
-  int dsty=rowa*rowh-vmgr->scrolly;
-  int row=rowa; for (;row<=rowz;row++,dsty+=rowh,cellrowv+=vmgr->grid->w) {
-    const uint8_t *cellv=cellrowv;
-    int dstx=dstx0;
-    int col=cola; for (;col<=colz;col++,dstx+=colw,cellv++) {
-      int srcx=((*cellv)&15)*colw;
-      int srcy=((*cellv)>>4)*rowh;
-      rb_image_blit_safe(
-        vmgr->fb,dstx,dsty,
-        tilesheet,srcx,srcy,
-        colw,rowh,
-        0,0,0
-      );
-    }
+  // If our view exceeds bgbits, or if forced, refresh it.
+  if (vmgr->bgbitsdirty) {
+    rb_vmgr_refresh_bgbits(vmgr,tilesheet,colw,rowh,worldw,worldh);
+    vmgr->bgbitsdirty=0;
+  } else {
+    rb_vmgr_update_bgbits(vmgr,tilesheet,colw,rowh,worldw,worldh);
   }
+  
+  // Copy from bgbits.
+  rb_image_blit_safe(
+    vmgr->fb,0,0,
+    vmgr->bgbits,vmgr->scrollx-vmgr->bgbitsx,vmgr->scrolly-vmgr->bgbitsy,
+    RB_FB_W,RB_FB_H,
+    0,0,0
+  );
 }
 
 /* Foreground: Sprites.
@@ -98,9 +152,11 @@ static int rb_vmgr_render_sprites(struct rb_vmgr *vmgr) {
  
 struct rb_image *rb_vmgr_render(struct rb_vmgr *vmgr) {
   if (!vmgr) return 0;
+  
   rb_vmgr_render_background(vmgr);
   rb_sprite_group_sort(vmgr->sprites);
   if (rb_vmgr_render_sprites(vmgr)<0) return 0;
+  
   return vmgr->fb;
 }
 

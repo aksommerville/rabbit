@@ -17,6 +17,7 @@ static int cameradsty=0;
  */
 #define FULLSCREEN 1
 #define HALFSCREEN 2
+#define CONTINUOUS 3
 #define INTERVAL HALFSCREEN
 
 /* Update camera.
@@ -24,6 +25,20 @@ static int cameradsty=0;
  */
  
 static int demo_halfscroll_update_camera() {
+  if (vmgr->sprites->c<1) return 0;
+  struct rb_sprite *sprite=vmgr->sprites->v[0];
+  int xlimit=vmgr->grid->w*16-RB_FB_W;
+  int ylimit=vmgr->grid->h*16-RB_FB_H;
+
+  #if INTERVAL==CONTINUOUS
+  vmgr->scrollx=sprite->x-(RB_FB_W>>1);
+  if (vmgr->scrollx>xlimit) vmgr->scrollx=xlimit;
+  if (vmgr->scrollx<0) vmgr->scrollx=0;
+  vmgr->scrolly=sprite->y-(RB_FB_H>>1);
+  if (vmgr->scrolly>ylimit) vmgr->scrolly=ylimit;
+  if (vmgr->scrolly<0) vmgr->scrolly=0;
+  return 0;
+  #endif
 
   // Check hero against the target region and begin scrolling if he leaves the middle.
   // Margins must be no wider than a quarter screen, otherwise it will get stuck.
@@ -42,26 +57,21 @@ static int demo_halfscroll_update_camera() {
     const int xspeed=6;
     const int yspeed=6;
   #endif
-  int xlimit=vmgr->grid->w*16-RB_FB_W;
-  int ylimit=vmgr->grid->h*16-RB_FB_H;
-  if (vmgr->sprites->c>=1) {
-    struct rb_sprite *sprite=vmgr->sprites->v[0];
-    int viewx=sprite->x-cameradstx;
-    int viewy=sprite->y-cameradsty;
-    if (viewx<xmargin) {
-      cameradstx-=xstep;
-      if (cameradstx<0) cameradstx=0;
-    } else if (viewx>RB_FB_W-xmargin) {
-      cameradstx+=xstep;
-      if (cameradstx>xlimit) cameradstx=xlimit;
-    }
-    if (viewy<ymargin) {
-      cameradsty-=ystep;
-      if (cameradsty<0) cameradsty=0;
-    } else if (viewy>RB_FB_H-ymargin) {
-      cameradsty+=ystep;
-      if (cameradsty>ylimit) cameradsty=ylimit;
-    }
+  int viewx=sprite->x-cameradstx;
+  int viewy=sprite->y-cameradsty;
+  if (viewx<xmargin) {
+    cameradstx-=xstep;
+    if (cameradstx<0) cameradstx=0;
+  } else if (viewx>RB_FB_W-xmargin) {
+    cameradstx+=xstep;
+    if (cameradstx>xlimit) cameradstx=xlimit;
+  }
+  if (viewy<ymargin) {
+    cameradsty-=ystep;
+    if (cameradsty<0) cameradsty=0;
+  } else if (viewy>RB_FB_H-ymargin) {
+    cameradsty+=ystep;
+    if (cameradsty>ylimit) cameradsty=ylimit;
   }
   
   // Effect any in-progress scroll.

@@ -24,7 +24,9 @@ struct rb_vmgr {
   int scrollx,scrolly;
   struct rb_image *imagev[RB_VMGR_IMAGE_COUNT];
   struct rb_image *fb;
-  //TODO Optimization: Maintain an image with a one-tile border around the background, render the grid there.
+  struct rb_image *bgbits; // 32 pixels wider and taller than the framebuffer, grid image
+  int bgbitsx,bgbitsy;
+  int bgbitsdirty; // nonzero to redraw bgbits from scratch
 };
 
 struct rb_vmgr *rb_vmgr_new();

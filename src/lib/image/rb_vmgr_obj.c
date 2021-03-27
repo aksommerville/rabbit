@@ -21,6 +21,18 @@ struct rb_vmgr *rb_vmgr_new() {
     return 0;
   }
   
+  const int bgbits_extra_x=32;
+  const int bgbits_extra_y=32;
+  if (!(vmgr->bgbits=rb_image_new(
+    RB_FB_W+bgbits_extra_x,
+    RB_FB_H+bgbits_extra_y
+  ))) {
+    rb_vmgr_del(vmgr);
+    return 0;
+  }
+  vmgr->bgbits->alphamode=RB_ALPHAMODE_OPAQUE;
+  vmgr->bgbitsdirty=1;
+  
   return vmgr;
 }
 
@@ -41,6 +53,7 @@ void rb_vmgr_del(struct rb_vmgr *vmgr) {
   }
   
   rb_image_del(vmgr->fb);
+  rb_image_del(vmgr->bgbits);
   
   free(vmgr);
 }
@@ -90,6 +103,7 @@ int rb_vmgr_set_grid(struct rb_vmgr *vmgr,struct rb_grid *grid) {
   if (grid&&(rb_grid_ref(grid)<0)) return -1;
   rb_grid_del(vmgr->grid);
   vmgr->grid=grid;
+  vmgr->bgbitsdirty=1;
   return 0;
 }
 
