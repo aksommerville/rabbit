@@ -39,7 +39,7 @@ struct rb_sprite_type {
   void (*del)(struct rb_sprite *sprite);
   int (*init)(struct rb_sprite *sprite);
   
-  int (*render)(struct rb_framebuffer *dst,struct rb_sprite *sprite,int x,int y);
+  int (*render)(struct rb_image *dst,struct rb_sprite *sprite,int x,int y);
 };
 
 /* Sprite group.

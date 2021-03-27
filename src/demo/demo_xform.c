@@ -62,13 +62,13 @@ static int demo_xform_update() {
     //advance_setup();
   }
 
-  memset(rb_demo_fb.v,0x80,RB_FB_SIZE_BYTES);
+  memset(rb_demo_fb->pixels,0x80,RB_FB_SIZE_BYTES);
   
   // Draw the font image in the middle of the framebuffer with no xform, for reference.
   int dstx=(RB_FB_W>>1)-(font->w>>1);
   int dsty=(RB_FB_H>>1)-(font->h>>1);
-  if (rb_framebuffer_blit_safe(
-    &rb_demo_fb,dstx,dsty,
+  if (rb_image_blit_safe(
+    rb_demo_fb,dstx,dsty,
     font,0,0,
     font->w,font->h,
     xform,blend_dark_blue,0
@@ -79,8 +79,8 @@ static int demo_xform_update() {
     int py=-1; for (;py<=1;py++) {
       int px=-1; for (;px<=1;px++) {
         if (!py&&!px) continue;
-        if (rb_framebuffer_blit_safe(
-          &rb_demo_fb,dstx+px*(RB_FB_W>>1),dsty+py*(RB_FB_H>>1),
+        if (rb_image_blit_safe(
+          rb_demo_fb,dstx+px*(RB_FB_W>>1),dsty+py*(RB_FB_H>>1),
           font,0,0,
           font->w,font->h,
           xform,0,0
@@ -90,8 +90,8 @@ static int demo_xform_update() {
   }
   
   if (message) {
-    rb_framebuffer_blit_safe(
-      &rb_demo_fb,(RB_FB_W>>1)-(message->w>>1),(RB_FB_H>>2),
+    rb_image_blit_safe(
+      rb_demo_fb,(RB_FB_W>>1)-(message->w>>1),(RB_FB_H>>2),
       message,0,0,
       message->w,message->h,
       0,blend_white,0

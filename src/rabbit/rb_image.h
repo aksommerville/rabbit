@@ -15,20 +15,6 @@
 #define RB_XFORM_YREV    2
 #define RB_XFORM_SWAP    4
 
-/* Framebuffer is a packed 32-bit RGB image of fixed size 256x144.
- * The high 8 bits of each pixel are ignored.
- ******************************************************/
-
-#define RB_FB_W 256
-#define RB_FB_H 144
-#define RB_FB_SIZE_BYTES (RB_FB_W*RB_FB_H*4)
-
-struct rb_framebuffer {
-  uint32_t v[RB_FB_W*RB_FB_H];
-};
-
-void rb_framebuffer_clear(struct rb_framebuffer *fb,uint32_t xrgb);
-
 /* Renderable image is 32-bit ARGB. (Alpha in the most-significant byte)
  * Dimensions are fixed at construction.
  ****************************************************/
@@ -51,6 +37,11 @@ struct rb_image *rb_image_new(int w,int h);
 void rb_image_del(struct rb_image *image);
 int rb_image_ref(struct rb_image *image);
 
+#define RB_FB_W 256
+#define RB_FB_H 144
+#define RB_FB_SIZE_BYTES (RB_FB_W*RB_FB_H*4)
+struct rb_image *rb_framebuffer_new();
+
 /* Our images are encoded in a pretty simple format for easy loading.
  * Starts with a 32-bit header:
  *   ff000000 format
@@ -67,6 +58,8 @@ struct rb_image *rb_image_new_decode(const void *src,int srcc);
 
 /* Rendering.
  ********************************************************/
+ 
+int rb_image_clear(struct rb_image *image,uint32_t argb);
 
 /* We check bounds and reject if invalid -- we do not attempt to correct them.
  * If (xform) swaps axes, (w,h) refer to the source image. Output dimensions will be (h,w).
@@ -74,8 +67,8 @@ struct rb_image *rb_image_new_decode(const void *src,int srcc);
  * (blend) is called for every pixel if input alphamode is BLEND or OPAQUE.
  * For COLORKEY and DISCRETE images, we only call for pixels we think generically are opaque.
  */
-int rb_framebuffer_blit(
-  struct rb_framebuffer *dst,int dstx,int dsty,
+int rb_image_blit(
+  struct rb_image *dst,int dstx,int dsty,
   const struct rb_image *src,int srcx,int srcy,
   int w,int h,
   uint8_t xform,
@@ -83,8 +76,8 @@ int rb_framebuffer_blit(
   void *userdata
 );
 
-int rb_framebuffer_blit_safe(
-  struct rb_framebuffer *dst,int dstx,int dsty,
+int rb_image_blit_safe(
+  struct rb_image *dst,int dstx,int dsty,
   const struct rb_image *src,int srcx,int srcy,
   int w,int h,
   uint8_t xform,
@@ -93,10 +86,10 @@ int rb_framebuffer_blit_safe(
 );
 
 /* Invalid bounds may segfault.
- * You must rb_framebuffer_check_bounds() first.
+ * You must rb_image_check_bounds() first.
  */
-void rb_framebuffer_blit_unchecked(
-  struct rb_framebuffer *dst,int dstx,int dsty,
+void rb_image_blit_unchecked(
+  struct rb_image *dst,int dstx,int dsty,
   const struct rb_image *src,int srcx,int srcy,
   int w,int h,
   uint8_t xform,
@@ -107,8 +100,8 @@ void rb_framebuffer_blit_unchecked(
 /* Adjust (dstx,dsty,srcx,srcy,w,h) if needed to keep all in bounds.
  * Returns >0 if the final bounds are valid.
  */
-int rb_framebuffer_check_bounds(
-  const struct rb_framebuffer *dst,int *dstx,int *dsty,
+int rb_image_check_bounds(
+  const struct rb_image *dst,int *dstx,int *dsty,
   const struct rb_image *src,int *srcx,int *srcy,
   int *w,int *h,
   uint8_t xform

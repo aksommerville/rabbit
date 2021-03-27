@@ -16,6 +16,11 @@ struct rb_vmgr *rb_vmgr_new() {
     return 0;
   }
   
+  if (!(vmgr->fb=rb_framebuffer_new())) {
+    rb_vmgr_del(vmgr);
+    return 0;
+  }
+  
   return vmgr;
 }
 
@@ -34,6 +39,8 @@ void rb_vmgr_del(struct rb_vmgr *vmgr) {
   while (i-->0) {
     if (vmgr->imagev[i]) rb_image_del(vmgr->imagev[i]);
   }
+  
+  rb_image_del(vmgr->fb);
   
   free(vmgr);
 }

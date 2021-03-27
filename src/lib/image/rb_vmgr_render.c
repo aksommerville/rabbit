@@ -7,7 +7,7 @@
  */
  
 static void rb_vmgr_color_background(struct rb_vmgr *vmgr) {
-  memset(vmgr->fb.v,0,RB_FB_SIZE_BYTES);
+  memset(vmgr->fb->pixels,0,RB_FB_SIZE_BYTES);
 }
 
 /* Background: Grid or black.
@@ -64,8 +64,8 @@ static void rb_vmgr_render_background(struct rb_vmgr *vmgr) {
     int col=cola; for (;col<=colz;col++,dstx+=colw,cellv++) {
       int srcx=((*cellv)&15)*colw;
       int srcy=((*cellv)>>4)*rowh;
-      rb_framebuffer_blit_safe(
-        &vmgr->fb,dstx,dsty,
+      rb_image_blit_safe(
+        vmgr->fb,dstx,dsty,
         tilesheet,srcx,srcy,
         colw,rowh,
         0,0,0
@@ -85,7 +85,7 @@ static int rb_vmgr_render_sprites(struct rb_vmgr *vmgr) {
     int y=sprite->y-vmgr->scrolly;
     
     if (sprite->type->render) {
-      if (sprite->type->render(&vmgr->fb,sprite,x,y)<0) return -1;
+      if (sprite->type->render(vmgr->fb,sprite,x,y)<0) return -1;
     } else {
       rb_vmgr_render_tile(vmgr,sprite->imageid,sprite->tileid,sprite->xform,x,y);
     }
@@ -96,12 +96,12 @@ static int rb_vmgr_render_sprites(struct rb_vmgr *vmgr) {
 /* Render, main entry point.
  */
  
-struct rb_framebuffer *rb_vmgr_render(struct rb_vmgr *vmgr) {
+struct rb_image *rb_vmgr_render(struct rb_vmgr *vmgr) {
   if (!vmgr) return 0;
   rb_vmgr_render_background(vmgr);
   rb_sprite_group_sort(vmgr->sprites);
   if (rb_vmgr_render_sprites(vmgr)<0) return 0;
-  return &vmgr->fb;
+  return vmgr->fb;
 }
 
 /* Render tile.
@@ -125,8 +125,8 @@ int rb_vmgr_render_tile(
   int dstx=x-(colw>>1);
   int dsty=y-(rowh>>1);
   
-  return rb_framebuffer_blit_safe(
-    &vmgr->fb,dstx,dsty,
+  return rb_image_blit_safe(
+    vmgr->fb,dstx,dsty,
     src,srcx,srcy,
     colw,rowh,
     xform,0,0

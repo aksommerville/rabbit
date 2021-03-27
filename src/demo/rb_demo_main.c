@@ -12,8 +12,8 @@ static const struct rb_demo *rb_demo=0;
 static volatile int rb_sigc=0;
 static volatile int rb_terminate=0;
 struct rb_video *rb_demo_video=0;
-struct rb_framebuffer rb_demo_fb={0};
-struct rb_framebuffer *rb_demo_override_fb=0;
+struct rb_image *rb_demo_fb=0;
+struct rb_image *rb_demo_override_fb=0;
 struct rb_audio *rb_demo_audio=0;
 struct rb_synth *rb_demo_synth=0;
 int rb_demo_mousex=0;
@@ -75,6 +75,9 @@ static void rb_demo_quit(int status) {
     rb_synth_del(rb_demo_synth);
     rb_demo_synth=0;
   }
+  
+  rb_image_del(rb_demo_fb);
+  rb_demo_fb=0;
   
   if (status) {
     fprintf(stderr,"%s: Terminate due to error.\n",rb_demo->name);
@@ -152,6 +155,8 @@ static int rb_demo_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
 static int rb_demo_init() {
 
   signal(SIGINT,rb_rcvsig);
+  
+  if (!(rb_demo_fb=rb_framebuffer_new())) return -1;
 
   if (rb_demo->use_video) {
     struct rb_video_delegate delegate={
@@ -218,7 +223,7 @@ static int rb_demo_main() {
         fprintf(stderr,"Updating video driver '%s' failed\n",rb_demo_video->type->name);
         return -1;
       }
-      struct rb_framebuffer *fb=&rb_demo_fb;
+      struct rb_image *fb=rb_demo_fb;
       if (rb_demo_override_fb) fb=rb_demo_override_fb;
       if (rb_video_swap(rb_demo_video,fb)<0) {
         fprintf(stderr,"Video '%s': swap failed\n",rb_demo_video->type->name);

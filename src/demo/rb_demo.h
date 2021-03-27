@@ -39,8 +39,8 @@
 
 extern struct rb_video *rb_demo_video;
 extern struct rb_audio *rb_demo_audio;
-extern struct rb_framebuffer rb_demo_fb;
-extern struct rb_framebuffer *rb_demo_override_fb; // demo may set this to provide its own fb
+extern struct rb_image *rb_demo_fb;
+extern struct rb_image *rb_demo_override_fb; // demo may set this to provide its own fb
 extern struct rb_synth *rb_demo_synth;
 extern int rb_demo_mousex;
 extern int rb_demo_mousey;

@@ -17,6 +17,16 @@ struct rb_image *rb_image_new(int w,int h) {
   return image;
 }
 
+/* New framebuffer.
+ */
+ 
+struct rb_image *rb_framebuffer_new() {
+  struct rb_image *image=rb_image_new(RB_FB_W,RB_FB_H);
+  if (!image) return 0;
+  image->alphamode=RB_ALPHAMODE_OPAQUE;
+  return image;
+}
+
 /* Delete.
  */
  

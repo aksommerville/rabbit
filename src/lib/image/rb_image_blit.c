@@ -1,28 +1,43 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_image.h"
 
-/* Blit to framebuffer with adjustment.
+/* Clear image.
  */
  
-int rb_framebuffer_blit_safe(
-  struct rb_framebuffer *dst,int dstx,int dsty,
+int rb_image_clear(struct rb_image *image,uint32_t argb) {
+  if (!image) return -1;
+  if (argb) {
+    uint32_t *dst=image->pixels;
+    int i=image->w*image->h;
+    for (;i-->0;dst++) *dst=argb;
+  } else {
+    memset(image->pixels,0,image->w*image->h*4);
+  }
+  return 0;
+}
+
+/* Blit to image with adjustment.
+ */
+ 
+int rb_image_blit_safe(
+  struct rb_image *dst,int dstx,int dsty,
   const struct rb_image *src,int srcx,int srcy,
   int w,int h,
   uint8_t xform,
   uint32_t (*blend)(uint32_t dst,uint32_t src,void *userdata),
   void *userdata
 ) {
-  if (rb_framebuffer_check_bounds(dst,&dstx,&dsty,src,&srcx,&srcy,&w,&h,xform)>0) {
-    rb_framebuffer_blit_unchecked(dst,dstx,dsty,src,srcx,srcy,w,h,xform,blend,userdata);
+  if (rb_image_check_bounds(dst,&dstx,&dsty,src,&srcx,&srcy,&w,&h,xform)>0) {
+    rb_image_blit_unchecked(dst,dstx,dsty,src,srcx,srcy,w,h,xform,blend,userdata);
   }
   return 0;
 }
 
-/* Blit to framebuffer.
+/* Blit to image.
  */
  
-void rb_framebuffer_blit_unchecked(
-  struct rb_framebuffer *dst,int dstx,int dsty,
+void rb_image_blit_unchecked(
+  struct rb_image *dst,int dstx,int dsty,
   const struct rb_image *src,int srcx,int srcy,
   int w,int h,
   uint8_t xform,
@@ -33,9 +48,9 @@ void rb_framebuffer_blit_unchecked(
   // No alpha or xform? Use rowwise memcpy.
   if (!xform&&!blend&&(src->alphamode==RB_ALPHAMODE_OPAQUE)) {
     int cpc=w<<2;
-    uint32_t *dstrow=dst->v+dsty*RB_FB_W+dstx;
+    uint32_t *dstrow=dst->pixels+dsty*dst->w+dstx;
     const uint32_t *srcrow=src->pixels+srcy*src->w+srcx;
-    for (;h-->0;dstrow+=RB_FB_W,srcrow+=src->w) {
+    for (;h-->0;dstrow+=dst->w,srcrow+=src->w) {
       memcpy(dstrow,srcrow,cpc);
     }
     return;
@@ -46,7 +61,7 @@ void rb_framebuffer_blit_unchecked(
    * (ddstmajor) changes based on RB_XFORM_SWAP, since that changes the meaning of (w,h).
    * (xform) is expressed mostly in the (src) iterator.
    */
-  uint32_t *dstp=dst->v+dsty*RB_FB_W+dstx;
+  uint32_t *dstp=dst->pixels+dsty*dst->w+dstx;
   int dstminorc,dstmajorc;
   if (xform&RB_XFORM_SWAP) {
     dstminorc=h;
@@ -55,7 +70,7 @@ void rb_framebuffer_blit_unchecked(
     dstminorc=w;
     dstmajorc=h;
   }
-  int ddstmajor=RB_FB_W-dstminorc;
+  int ddstmajor=dst->w-dstminorc;
   
   const uint32_t *srcp=src->pixels+srcy*src->w+srcx;
   int dsrcminor,dsrcmajor;
@@ -160,11 +175,11 @@ void rb_framebuffer_blit_unchecked(
   //...and that's all there is to it!
 }
 
-/* Blit to framebuffer: Assert bounds.
+/* Blit to image: Assert bounds.
  */
  
-int rb_framebuffer_blit(
-  struct rb_framebuffer *dst,int dstx,int dsty,
+int rb_image_blit(
+  struct rb_image *dst,int dstx,int dsty,
   const struct rb_image *src,int srcx,int srcy,
   int w,int h,
   uint8_t xform,
@@ -177,19 +192,19 @@ int rb_framebuffer_blit(
   if (dsty<0) return -1;
   if (srcx<0) return -1;
   if (srcy<0) return -1;
-  if (dstx>RB_FB_W-w) return -1;
-  if (dsty>RB_FB_H-h) return -1;
+  if (dstx>dst->w-w) return -1;
+  if (dsty>dst->h-h) return -1;
   if (srcx>src->w-w) return -1;
   if (srcy>src->h-h) return -1;
-  rb_framebuffer_blit_unchecked(dst,dstx,dsty,src,srcx,srcy,w,h,xform,blend,userdata);
+  rb_image_blit_unchecked(dst,dstx,dsty,src,srcx,srcy,w,h,xform,blend,userdata);
   return 1;
 }
 
 /* Check blit bounds.
  */
  
-int rb_framebuffer_check_bounds(
-  const struct rb_framebuffer *dst,int *dstx,int *dsty,
+int rb_image_check_bounds(
+  const struct rb_image *dst,int *dstx,int *dsty,
   const struct rb_image *src,int *srcx,int *srcy,
   int *w,int *h,
   uint8_t xform
@@ -201,8 +216,8 @@ int rb_framebuffer_check_bounds(
     if (*dsty<0) { (*srcy)-=(*dsty); (*h)+=(*dsty); (*dsty)=0; }
     if (*srcx<0) { (*dstx)-=(*srcx); (*w)+=(*srcx); (*srcx)=0; }
     if (*srcy<0) { (*dsty)-=(*srcy); (*h)+=(*srcy); (*srcy)=0; }
-    if ((*dstx)>RB_FB_W-(*w)) (*w)=RB_FB_W-(*dstx);
-    if ((*dsty)>RB_FB_H-(*h)) (*h)=RB_FB_H-(*dsty);
+    if ((*dstx)>dst->w-(*w)) (*w)=dst->w-(*dstx);
+    if ((*dsty)>dst->h-(*h)) (*h)=dst->h-(*dsty);
     if ((*srcx)>src->w-(*w)) (*w)=src->w-(*srcx);
     if ((*srcy)>src->h-(*h)) (*h)=src->h-(*srcy);
     if ((*w)<1) return 0;
@@ -254,21 +269,21 @@ int rb_framebuffer_check_bounds(
   
   if (xform&RB_XFORM_SWAP) {
     if (*dstx>RB_FB_W-*h) {
-      if (xform&RB_XFORM_YREV) (*srcy)+=(*dstx)+(*h)-RB_FB_W;
-      *h=RB_FB_W-*dstx;
+      if (xform&RB_XFORM_YREV) (*srcy)+=(*dstx)+(*h)-dst->w;
+      *h=dst->w-*dstx;
     }
     if (*dsty>RB_FB_H-*w) {
-      if (xform&RB_XFORM_XREV) (*srcx)+=(*dsty)+(*w)-RB_FB_H;
-      *w=RB_FB_H-*dsty;
+      if (xform&RB_XFORM_XREV) (*srcx)+=(*dsty)+(*w)-dst->h;
+      *w=dst->h-*dsty;
     }
   } else {
     if (*dstx>RB_FB_W-*w) {
-      if (xform&RB_XFORM_XREV) (*srcx)+=(*dstx)+(*w)-RB_FB_W;
-      *w=RB_FB_W-*dstx;
+      if (xform&RB_XFORM_XREV) (*srcx)+=(*dstx)+(*w)-dst->w;
+      *w=dst->w-*dstx;
     }
     if (*dsty>RB_FB_H-*h) {
-      if (xform&RB_XFORM_YREV) (*srcy)+=(*dsty)+(*h)-RB_FB_H;
-      *h=RB_FB_H-*dsty;
+      if (xform&RB_XFORM_YREV) (*srcy)+=(*dsty)+(*h)-dst->h;
+      *h=dst->h-*dsty;
     }
   }
   

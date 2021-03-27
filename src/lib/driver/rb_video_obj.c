@@ -73,7 +73,8 @@ int rb_video_update(struct rb_video *video) {
   return video->type->update(video);
 }
 
-int rb_video_swap(struct rb_video *video,struct rb_framebuffer *fb) {
+int rb_video_swap(struct rb_video *video,struct rb_image *fb) {
+  if (!fb||(fb->alphamode!=RB_ALPHAMODE_OPAQUE)||(fb->w!=RB_FB_W)||(fb->h!=RB_FB_H)) return -1;
   return video->type->swap(video,fb);
 }
 

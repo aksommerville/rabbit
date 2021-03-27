@@ -50,8 +50,8 @@ static void demo_inmgr_fill_bg() {
   const int srcy=64;
   int dsty=0; for (;dsty<RB_FB_H;dsty+=16) {
     int dstx=0; for (;dstx<RB_FB_W;dstx+=16) {
-      rb_framebuffer_blit_unchecked(
-        &rb_demo_fb,dstx,dsty,
+      rb_image_blit_unchecked(
+        rb_demo_fb,dstx,dsty,
         srcimage,srcx,srcy,
         16,16,
         0,0,0
@@ -63,8 +63,8 @@ static void demo_inmgr_fill_bg() {
 static void demo_inmgr_draw_joystick(int dstx,int dsty,uint16_t state) {
 
   #define CP(dx,dy,srcx,srcy,w,h,xform) \
-    rb_framebuffer_blit_unchecked( \
-      &rb_demo_fb,dstx+dx,dsty+dy, \
+    rb_image_blit_unchecked( \
+      rb_demo_fb,dstx+dx,dsty+dy, \
       srcimage,srcx,srcy, \
       w,h, \
       xform,0,0 \

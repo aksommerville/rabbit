@@ -18,7 +18,7 @@ static struct sprite {
   struct rb_image *image;
 } spritev[spritec]={0};
 
-static struct rb_framebuffer bgbits;
+static struct rb_image *bgbits;
 
 static void demo_manysprites_quit() {
   struct sprite *sprite=spritev;
@@ -153,7 +153,7 @@ static struct rb_image *generate_image_3() {
 }
 
 static void draw_bgbits() {
-  uint32_t *p=bgbits.v;
+  uint32_t *p=bgbits->pixels;
   int y=0; for (;y<RB_FB_H;y++) {
     uint8_t luma=0x40+((RB_FB_H-y)*0x80)/RB_FB_H;
     int x=0; for (;x<RB_FB_W;x++,p++) {
@@ -194,6 +194,7 @@ static int demo_manysprites_init() {
     if (sprite_init(sprite,i)<0) return -1;
   }
   
+  if (!(bgbits=rb_framebuffer_new())) return -1;
   draw_bgbits();
   
   fprintf(stderr,
@@ -220,8 +221,8 @@ static int sprite_update(struct sprite *sprite) {
 }
 
 static int sprite_draw(struct sprite *sprite) {
-  return rb_framebuffer_blit_safe(
-    &rb_demo_fb,sprite->x,sprite->y,
+  return rb_image_blit_safe(
+    rb_demo_fb,sprite->x,sprite->y,
     sprite->image,0,0,
     sprite->image->w,sprite->image->h,
     RB_XFORM_NONE,0,0
@@ -230,7 +231,7 @@ static int sprite_draw(struct sprite *sprite) {
 
 static int demo_manysprites_update() {
   // We're mixing up the model update and rendering. Bad practice in real life!
-  memcpy(rb_demo_fb.v,bgbits.v,RB_FB_SIZE_BYTES);
+  memcpy(rb_demo_fb->pixels,bgbits->pixels,RB_FB_SIZE_BYTES);
   struct sprite *sprite=spritev;
   int i=spritec;
   for (;i-->0;sprite++) {

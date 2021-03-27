@@ -120,7 +120,7 @@ static int make_random_sprite() {
 
 static int demo_vmgr_init() {
   if (!(vmgr=rb_vmgr_new())) return -1;
-  rb_demo_override_fb=&vmgr->fb;
+  rb_demo_override_fb=vmgr->fb;
   
   if (rb_archive_read("out/data",demo_vmgr_cb_res,0)<0) {
     fprintf(stderr,"Failed processing archive\n");

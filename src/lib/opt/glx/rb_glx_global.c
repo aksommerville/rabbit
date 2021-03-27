@@ -207,7 +207,7 @@ static void rb_glx_recalculate_output_bounds(struct rb_video *video) {
 /* Frame control.
  */
 
-static int _rb_glx_swap(struct rb_video *video,struct rb_framebuffer *fb) {
+static int _rb_glx_swap(struct rb_video *video,struct rb_image *fb) {
 
   if (VIDEO->dstdirty) {
     rb_glx_recalculate_output_bounds(video);
@@ -220,7 +220,7 @@ static int _rb_glx_swap(struct rb_video *video,struct rb_framebuffer *fb) {
   }
   glViewport(VIDEO->dstx,VIDEO->dsty,VIDEO->dstw,VIDEO->dsth);
 
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,RB_FB_W,RB_FB_H,0,GL_BGRA,GL_UNSIGNED_BYTE,fb->v);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,RB_FB_W,RB_FB_H,0,GL_BGRA,GL_UNSIGNED_BYTE,fb->pixels);
   glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2i(0,1); glVertex2i(-1,-1);
     glTexCoord2i(0,0); glVertex2i(-1, 1);

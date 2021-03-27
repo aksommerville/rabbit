@@ -9,7 +9,6 @@
 struct rb_video;
 struct rb_video_type;
 struct rb_video_delegate;
-struct rb_framebuffer;
 
 /* Video driver instance.
  ************************************************************/
@@ -59,8 +58,9 @@ int rb_video_ref(struct rb_video *video);
 int rb_video_update(struct rb_video *video);
 
 /* Send (fb) to the screen and block until it gets there (ie vblank).
+ * (fb) must have alphamode OPAQUE and dimensions (RB_FB_W,RB_FB_H).
  */
-int rb_video_swap(struct rb_video *video,struct rb_framebuffer *fb);
+int rb_video_swap(struct rb_video *video,struct rb_image *fb);
 
 /* 0=window, 1=fullscreen, -1=query
  * Returns actual state after change.
@@ -83,7 +83,7 @@ struct rb_video_type {
   void (*del)(struct rb_video *video);
   int (*init)(struct rb_video *video);
   int (*update)(struct rb_video *video);
-  int (*swap)(struct rb_video *video,struct rb_framebuffer *fb); // REQUIRED
+  int (*swap)(struct rb_video *video,struct rb_image *fb); // REQUIRED
   int (*set_fullscreen)(struct rb_video *video,int fullscreen);
   void (*suppress_screensaver)(struct rb_video *video);
 };

@@ -9,7 +9,6 @@
 #define RB_VMGR_H
 
 struct rb_image;
-struct rb_framebuffer;
 struct rb_grid;
 struct rb_sprite;
 struct rb_sprite_group;
@@ -24,7 +23,7 @@ struct rb_vmgr {
   struct rb_sprite_group *sprites;
   int scrollx,scrolly;
   struct rb_image *imagev[RB_VMGR_IMAGE_COUNT];
-  struct rb_framebuffer fb;
+  struct rb_image *fb;
   //TODO Optimization: Maintain an image with a one-tile border around the background, render the grid there.
 };
 
@@ -39,7 +38,7 @@ int rb_vmgr_set_image(struct rb_vmgr *vmgr,uint8_t imageid,struct rb_image *imag
  * Caller should deliver this framebuffer to the video driver.
  * You can add overlay content before that, of course.
  */
-struct rb_framebuffer *rb_vmgr_render(struct rb_vmgr *vmgr);
+struct rb_image *rb_vmgr_render(struct rb_vmgr *vmgr);
 
 int rb_vmgr_set_grid(struct rb_vmgr *vmgr,struct rb_grid *grid);
 int rb_vmgr_set_sprites(struct rb_vmgr *vmgr,struct rb_sprite_group *group);

@@ -15,7 +15,6 @@ struct rb_audio_type;
 struct rb_audio_delegate;
 
 // Video.
-struct rb_framebuffer;
 struct rb_image;
 
 // Audio.
