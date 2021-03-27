@@ -3,11 +3,17 @@
 
 #include "rabbit/rb_internal.h"
 
+/* Test declarations.
+ ***************************************************************/
+
 #define RB_ITEST(name,...) int name()
 #define XXX_RB_ITEST(name,...) int name()
 
-#define RB_UTEST(name,...) _RB_UTEST(1,name,#__VA_ARGS__)
-#define XXX_RB_UTEST(name,...) _RB_UTEST(0,name,#__VA_ARGS__)
+#define RB_UTEST(name,...) _RB_UTEST(0,name,#__VA_ARGS__)
+#define XXX_RB_UTEST(name,...) _RB_UTEST(1,name,#__VA_ARGS__)
+
+/* Assertions.
+ *************************************************************/
 
 #define RB_ERROR_RETURN_VALUE -1
 
@@ -90,6 +96,12 @@
     RB_FAIL_END \
   } \
 }
+
+/* Odds, ends.
+ **************************************************************/
+ 
+void rb_render_image_to_console(const struct rb_image *image);
+void rb_render_image_alpha_to_console(const struct rb_image *image);
 
 /* Nothing for test cases below this point, just internals...
  ********************************************************************/

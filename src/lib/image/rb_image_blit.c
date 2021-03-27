@@ -45,8 +45,12 @@ void rb_image_blit_unchecked(
   void *userdata
 ) {
 
-  // No alpha or xform? Use rowwise memcpy.
-  if (!xform&&!blend&&(src->alphamode==RB_ALPHAMODE_OPAQUE)) {
+  // Opaque and no alpha or xform? Use rowwise memcpy.
+  if (
+    !xform&&!blend&&
+    (src->alphamode==RB_ALPHAMODE_OPAQUE)&&
+    (dst->alphamode!=RB_ALPHAMODE_COLORKEY)
+  ) {
     int cpc=w<<2;
     uint32_t *dstrow=dst->pixels+dsty*dst->w+dstx;
     const uint32_t *srcrow=src->pixels+srcy*src->w+srcx;
@@ -130,7 +134,52 @@ void rb_image_blit_unchecked(
     } \
   }
   
-  /* Select a per-pixel strategy based on (blend) or (src->alphamode).
+  /* Worst-case scenario when both images use continuous alpha.
+   * Source pixel gets (srca), dst pixel gets (dsta*(1-srca)), and output alpha is (srca+dsta) clamped to 1.
+   */
+  if (
+    (dst->alphamode==RB_ALPHAMODE_BLEND)&&
+    (src->alphamode==RB_ALPHAMODE_BLEND)
+  ) {
+    if (blend) ITERATE({
+      *dstp=blend(*dstp,*srcp,userdata);
+    }) else ITERATE({
+      uint8_t srca=(*srcp)>>24;
+      uint8_t dsta=(*dstp)>>24;
+      if (srca==0x00) ;
+      else if (!dsta||(srca==0xff)) {
+        *dstp=*srcp;
+      } else {
+        int suma=dsta+srca;
+        if (suma>0xff) suma=0xff;
+        dsta=(dsta*(0xff-srca))>>8;
+        uint8_t r=((((*dstp)>>16)&0xff)*dsta+(((*srcp)>>16)&0xff)*srca)>>8;
+        uint8_t g=((((*dstp)>>8)&0xff)*dsta+(((*srcp)>>8)&0xff)*srca)>>8;
+        uint8_t b=(((*dstp)&0xff)*dsta+((*srcp)&0xff)*srca)>>8;
+        *dstp=(suma<<24)|(r<<16)|(g<<8)|b;
+      }
+    })
+    return;
+  }
+  
+  /* Another special case when output is COLORKEY and input is OPAQUE.
+   * We must check for zeroes in the input and force them nonzero.
+   * By definition our output can not contain zeroes.
+   */
+  if (
+    (dst->alphamode==RB_ALPHAMODE_COLORKEY)&&
+    (src->alphamode==RB_ALPHAMODE_OPAQUE)
+  ) {
+    if (blend) ITERATE({
+      // Allow zeroes from the blend hook; caller takes responsibility for this.
+      *dstp=blend(*dstp,*srcp,userdata);
+    }) else ITERATE({
+      if (!(*dstp=*srcp)) (*dstp)=0xff000000;
+    })
+    return;
+  }
+    
+  /* Likelier cases, where we pick a strategy based on (src) alone.
    */
   switch (src->alphamode) {
   
@@ -168,7 +217,6 @@ void rb_image_blit_unchecked(
         *dstp=*srcp;
       }) break;
     
-    default: return; // invalid alphamode
   }
   #undef ITERATE
   
