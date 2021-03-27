@@ -1,0 +1,20 @@
+Rabbit Input Config Format
+
+Text file with LF newlines (CR is safely ignored).
+Line comments begin '#'.
+Excess whitespace anywhere is ignored.
+
+File is a collection of device blocks:
+  device VID PID "NAME"
+    RULES...
+  end
+
+RULES are any of:
+  SRCBTNID btn left|right|up|down|a|b|c|d|l|r|start|select|INTEGER
+  SRCBTNID axis horz|vert|-horz|-vert
+  SRCBTNID hat
+  
+Ranges are calculated at connection, they can't be specified in the config.
+
+Device name must not contain '#', we're not smart about tokenization.
+(you can substitute '*')

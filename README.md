@@ -1,8 +1,9 @@
 # Rabbit game platform
 
 ## TODO
-- [ ] Input.
+- [x] Input.
 - [ ] POC half-screen scrolling. Not really a Rabbit concern but I'm dying to see it.
+- [ ] Eliminate rb_framebuffer, use rb_image for everything. Think it through.
 - [ ] Cross-platform build scripts.
 - [ ] Compile-time config file with optional unit flags, etc.
 - [ ] Install scripts.

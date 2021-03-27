@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RB_DEFAULT_DEMO_NAME "input_drivers"
+#define RB_DEFAULT_DEMO_NAME "inmgr"
 
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \
@@ -18,7 +18,8 @@
   _(midiin) \
   _(midiredline) \
   _(vmgr) \
-  _(input_drivers)
+  _(input_drivers) \
+  _(inmgr)
   
 /* Define these things before including this header, if you don't want the defaults.
  */
