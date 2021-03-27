@@ -70,6 +70,17 @@ int rb_vmgr_set_image(struct rb_vmgr *vmgr,uint8_t imageid,struct rb_image *imag
   return 0;
 }
 
+/* Decode and install image.
+ */
+
+int rb_vmgr_set_image_serial(struct rb_vmgr *vmgr,uint8_t imageid,const void *src,int srcc) {
+  struct rb_image *image=rb_image_new_decode(src,srcc);
+  if (!image) return -1;
+  int err=rb_vmgr_set_image(vmgr,imageid,image);
+  rb_image_del(image);
+  return err;
+}
+
 /* Replace grid.
  */
 

@@ -32,6 +32,7 @@ void rb_vmgr_del(struct rb_vmgr *vmgr);
 int rb_vmgr_ref(struct rb_vmgr *vmgr);
 
 int rb_vmgr_set_image(struct rb_vmgr *vmgr,uint8_t imageid,struct rb_image *image);
+int rb_vmgr_set_image_serial(struct rb_vmgr *vmgr,uint8_t imageid,const void *src,int srcc);
 
 /* Render one frame.
  * Returns my framebuffer on success or null on error.

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RB_DEFAULT_DEMO_NAME "inmgr"
+#define RB_DEFAULT_DEMO_NAME "halfscroll"
 
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \
@@ -19,7 +19,8 @@
   _(midiredline) \
   _(vmgr) \
   _(input_drivers) \
-  _(inmgr)
+  _(inmgr) \
+  _(halfscroll)
   
 /* Define these things before including this header, if you don't want the defaults.
  */
