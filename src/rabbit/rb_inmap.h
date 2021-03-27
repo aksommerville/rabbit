@@ -16,6 +16,7 @@ struct rb_encoder;
  
 struct rb_inmap {
   int plrid;
+  struct rb_input *source; // WEAK
   int devid;
   uint16_t state;
   int refc;

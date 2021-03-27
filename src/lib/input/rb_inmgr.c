@@ -76,7 +76,6 @@ static int rb_inmgr_drop_map_buttons(struct rb_inmgr *inmgr,struct rb_inmap *inm
  */
  
 static int rb_inmgr_reassign_devices(struct rb_inmgr *inmgr) {
-  fprintf(stderr,"%s...\n",__func__);
   if ((inmgr->playerc<1)||(inmgr->playerc>RB_PLAYER_LIMIT)) inmgr->playerc=1;
   
   // Unassign any devices out of range, and count assignments by plrid.
@@ -263,6 +262,7 @@ static int rb_inmgr_cb_connect(struct rb_input *input,int devid) {
   }
   
   inmap->plrid=0;
+  inmap->source=input;
   inmap->devid=devid;
   inmap->userdata=inmgr;
   inmap->cb=rb_inmgr_cb_mapped;
@@ -285,7 +285,7 @@ static int rb_inmgr_cb_connect(struct rb_input *input,int devid) {
  
 static int rb_inmgr_cb_disconnect(struct rb_input *input,int devid) {
   struct rb_inmgr *inmgr=input->delegate.userdata;
-  int p=rb_inmgr_search_maps(inmgr,devid);
+  int p=rb_inmgr_search_maps(inmgr,input,devid);
   if (p<0) return 0;
   struct rb_inmap *inmap=inmgr->inmapv[p];
   
@@ -313,10 +313,11 @@ static int rb_inmgr_cb_disconnect(struct rb_input *input,int devid) {
 static int rb_inmgr_cb_event(struct rb_input *input,int devid,int btnid,int value) {
   struct rb_inmgr *inmgr=input->delegate.userdata;
   
-  int p=rb_inmgr_search_maps(inmgr,devid);
+  int p=rb_inmgr_search_maps(inmgr,input,devid);
   if (p<0) {
     if (inmgr->include_raw&&inmgr->delegate.cb_event) {
       struct rb_input_event event={
+        .source=input,
         .devid=devid,
         .devbtnid=btnid,
         .devvalue=value,
@@ -402,7 +403,7 @@ uint16_t rb_inmgr_get_state(struct rb_inmgr *inmgr,int plrid) {
  */
  
 int rb_inmgr_add_map(struct rb_inmgr *inmgr,struct rb_inmap *inmap) {
-  int p=rb_inmgr_search_maps(inmgr,inmap->devid);
+  int p=rb_inmgr_search_maps(inmgr,inmap->source,inmap->devid);
   if (p>=0) return -1;
   p=-p-1;
   if (inmgr->inmapc>=inmgr->inmapa) {
@@ -423,11 +424,14 @@ int rb_inmgr_add_map(struct rb_inmgr *inmgr,struct rb_inmap *inmap) {
 /* Search maps.
  */
  
-int rb_inmgr_search_maps(struct rb_inmgr *inmgr,int devid) {
+int rb_inmgr_search_maps(struct rb_inmgr *inmgr,const struct rb_input *source,int devid) {
   int lo=0,hi=inmgr->inmapc;
   while (lo<hi) {
     int ck=(lo+hi)>>1;
-         if (devid<inmgr->inmapv[ck]->devid) hi=ck;
+    struct rb_inmap *inmap=inmgr->inmapv[ck];
+         if (source<inmap->source) hi=ck;
+    else if (source>inmap->source) lo=ck+1;
+    else if (devid<inmgr->inmapv[ck]->devid) hi=ck;
     else if (devid>inmgr->inmapv[ck]->devid) lo=ck+1;
     else return ck;
   }

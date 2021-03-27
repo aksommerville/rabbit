@@ -149,6 +149,23 @@ static int rb_demo_cb_pcm_out(int16_t *v,int c,struct rb_audio *audio) {
   return 0;
 }
 
+/* Keyboard event.
+ */
+ 
+static int rb_demo_cb_key(struct rb_video *video,int keycode,int value) {
+  //fprintf(stderr,"%s %08x=%d\n",__func__,keycode,value);
+  
+  // A few things we'll do without being asked...
+  if (value==1) switch (keycode) {
+    case 0x00070009: rb_video_set_fullscreen(video,video->fullscreen?0:1); return 0; // F
+    case 0x00070029: rb_terminate=1; return 0; // Escape
+  }
+  
+  if (rb_demo->cb_key) return rb_demo->cb_key(keycode,value);
+  
+  return 0;
+}
+
 /* Initialize.
  */
  
@@ -164,6 +181,7 @@ static int rb_demo_init() {
       .cb_close=rb_demo_cb_close,
       .cb_mmotion=rb_demo_cb_mmotion,
       .cb_mbutton=rb_demo_cb_mbutton,
+      .cb_key=rb_demo_cb_key,
       .fullscreen=0,
     };
     if (!(rb_demo_video=rb_video_new(0,&delegate))) {

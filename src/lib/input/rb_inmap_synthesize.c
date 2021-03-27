@@ -254,8 +254,8 @@ static void rb_inmap_synthesizer_assess_all(struct rb_inmap_synthesizer *syn) {
  */
  
 static void rb_inmap_synthesizer_drop_discards(struct rb_inmap_synthesizer *syn) {
-  int i=syn->fieldc-1;
-  struct rb_inmap_synthesizer_field *field=syn->fieldv+i;
+  int i=syn->fieldc;
+  struct rb_inmap_synthesizer_field *field=syn->fieldv+i-1;
   for (;i-->0;field--) {
     if (
       (field->assessment==RB_ASSESSMENT_DISCARD)||

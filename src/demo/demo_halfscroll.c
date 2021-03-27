@@ -1,3 +1,4 @@
+#define RB_DEMO_USE_CB_KEY 1
 #include "rb_demo.h"
 #include "rabbit/rb_vmgr.h"
 #include "rabbit/rb_inmgr.h"
@@ -28,7 +29,7 @@ static int demo_halfscroll_update_camera() {
   // Margins must be no wider than a quarter screen, otherwise it will get stuck.
   #if INTERVAL==HALFSCREEN
     const int xmargin=16*4; // <=4
-    const int ymargin=16*2; // <3
+    const int ymargin=16*1; // <3
     const int xstep=RB_FB_W>>1;
     const int ystep=RB_FB_H>>1;
     const int xspeed=4;
@@ -191,6 +192,10 @@ static int demo_halfscroll_inmgr_event(struct rb_inmgr *inmgr,const struct rb_in
   return 0;
 }
 
+static int demo_halfscroll_cb_key(int keycode,int value) {
+  return rb_inmgr_system_keyboard_event(inmgr,keycode,value);
+}
+
 static int demo_halfscroll_res(
   uint32_t restype,int resid,const void *src,int srcc,void *userdata
 ) {
@@ -211,6 +216,7 @@ static int demo_halfscroll_init() {
   };
   if (!(inmgr=rb_inmgr_new(&indelegate))) return -1;
   if (rb_inmgr_connect_all(inmgr)<0) return -1;
+  if (rb_inmgr_use_system_keyboard(inmgr)<0) return -1;
   
   if (rb_archive_read("out/data",demo_halfscroll_res,0)<0) return -1;
   

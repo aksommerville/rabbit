@@ -98,9 +98,15 @@ int rb_inmgr_set_player_count(struct rb_inmgr *inmgr,int playerc);
 uint16_t rb_inmgr_get_state(struct rb_inmgr *inmgr,int plrid);
 
 int rb_inmgr_add_map(struct rb_inmgr *inmgr,struct rb_inmap *inmap);
-int rb_inmgr_search_maps(struct rb_inmgr *inmgr,int devid);
+int rb_inmgr_search_maps(struct rb_inmgr *inmgr,const struct rb_input *source,int devid);
 
 int rb_input_button_repr(char *dst,int dsta,int btnid);
 int rb_input_button_eval(const char *src,int srcc);
+
+/* If the video manager provides a system keyboard, hook it up here.
+ * Keycodes must be USB-HID page 7 -- Rabbit's own video drivers will always return in this format.
+ */
+int rb_inmgr_use_system_keyboard(struct rb_inmgr *inmgr);
+int rb_inmgr_system_keyboard_event(struct rb_inmgr *inmgr,int keycode,int value);
 
 #endif

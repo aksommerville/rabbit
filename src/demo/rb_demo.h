@@ -37,6 +37,11 @@
 #else
   #define RB_DEMO_CBCLICK(_) 0
 #endif
+#if RB_DEMO_USE_CB_KEY
+  #define RB_DEMO_CBKEY(_) _
+#else
+  #define RB_DEMO_CBKEY(_) 0
+#endif
 
 extern struct rb_video *rb_demo_video;
 extern struct rb_audio *rb_demo_audio;
@@ -52,6 +57,7 @@ struct rb_demo {
   int (*init)();
   int (*update)();
   int (*cb_click)(int x,int y,int value);
+  int (*cb_key)(int keycode,int value);
   int use_video;
   int use_audio;
 };
@@ -62,6 +68,7 @@ struct rb_demo {
   .init=demo_##_name##_init, \
   .update=demo_##_name##_update, \
   .cb_click=RB_DEMO_CBCLICK(demo_##_name##_cb_click), \
+  .cb_key=RB_DEMO_CBKEY(demo_##_name##_cb_key), \
   .use_video=RB_DEMO_USE_VIDEO, \
   .use_audio=RB_DEMO_USE_AUDIO, \
 };

@@ -1,3 +1,4 @@
+#define RB_DEMO_USE_CB_KEY 1
 #include "rb_demo.h"
 #include "rabbit/rb_inmgr.h"
 #include "rabbit/rb_archive.h"
@@ -26,6 +27,10 @@ static int demo_inmgr_event(struct rb_inmgr *inmgr,const struct rb_input_event *
   return 0;
 }
 
+static int demo_inmgr_cb_key(int keycode,int value) {
+  return rb_inmgr_system_keyboard_event(inmgr,keycode,value);
+}
+
 static int demo_inmgr_init() {
 
   if (rb_archive_read("out/data",demo_inmgr_cb_res,0)<=0) return -1;
@@ -35,6 +40,7 @@ static int demo_inmgr_init() {
   };
   if (!(inmgr=rb_inmgr_new(&delegate))) return -1;
   if (rb_inmgr_connect_all(inmgr)<0) return -1;
+  if (rb_inmgr_use_system_keyboard(inmgr)<0) return -1;
   if (rb_inmgr_set_player_count(inmgr,7)<0) return -1;
   dirty=1;
   return 0;
