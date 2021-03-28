@@ -23,6 +23,7 @@ static int rb_demo_framec=0;
 static double rb_demo_austarttime=0.0;
 static double rb_demo_auendtime=0.0;
 static int rb_demo_auframec=0;
+static struct timespec starttime={0},cpustarttime={0};
 
 /* Current real time.
  */
@@ -30,13 +31,29 @@ static int rb_demo_auframec=0;
 static double rb_demo_now() {
   struct timeval tv={0};
   gettimeofday(&tv,0);
-  return (double)tv.tv_sec+tv.tv_usec/1000000.0f;
+  return (double)tv.tv_sec+tv.tv_usec/1000000.0;
 }
 
 static double rb_demo_threadtime() {
   struct timespec tv={0};
   clock_gettime(CLOCK_THREAD_CPUTIME_ID,&tv);
-  return (double)tv.tv_sec+tv.tv_nsec/1000000000.0f;
+  return (double)tv.tv_sec+tv.tv_nsec/1000000000.0;
+}
+
+static void rb_demo_initialize_average_load() {
+  clock_gettime(CLOCK_REALTIME,&starttime);
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&cpustarttime);
+}
+
+static double rb_demo_calculate_average_load() {
+  struct timespec tvcpu={0},tvnow={0};
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&tvcpu);
+  clock_gettime(CLOCK_REALTIME,&tvnow);
+  double realend=(double)tvnow.tv_sec+tvnow.tv_nsec/1000000000.0;
+  double realstart=(double)starttime.tv_sec+starttime.tv_nsec/1000000000.0;
+  double cpuend=(double)tvcpu.tv_sec+tvcpu.tv_nsec/1000000000.0;
+  double cpustart=(double)cpustarttime.tv_sec+cpustarttime.tv_nsec/1000000000.0;
+  return (cpuend-cpustart)/(realend-realstart);
 }
 
 /* Signal handler.
@@ -102,6 +119,8 @@ static void rb_demo_quit(int status) {
       );
     }
     
+    double average_load=rb_demo_calculate_average_load();
+    fprintf(stderr,"Average CPU consumption (0..1): %.06f\n",average_load);
   }
 }
 
@@ -212,6 +231,7 @@ static int rb_demo_init() {
   }
   
   rb_demo_starttime=rb_demo_now();
+  rb_demo_initialize_average_load();
   
   return 0;
 }

@@ -1,0 +1,35 @@
+instrument {
+
+  osc main~2 shape=sine rate=2;
+  mlt main~2 arg=0.01;
+  add main~2 arg=1.0;
+  mlt main~2 arg note;
+
+  osc main~3 shape=sine rate=2 phase=0.5;
+  mlt main~3 arg=0.01;
+  add main~3 arg=1.0;
+  mlt main~3 arg note;
+
+  env main~1 mode=set {
+    time=1;
+    level=3.5;
+    00 80 0;
+    04 ff 100;
+    40 80 100;
+    c0 40 0;
+  }
+  
+  fm main ~0, rate ~2, mod1=1.5, range ~1;
+  fm main ~2, rate ~3, mod1=2.5, range ~1;
+  add main~0, arg~2;
+  
+  gain gain=3 clip=1.0;
+  env {
+    time=1;
+    level=0.100;
+    04 ff 0;
+    08 88 0;
+    80 00 110;
+  }
+  gain gain=12 clip=0.10;
+}

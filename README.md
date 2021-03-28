@@ -21,4 +21,4 @@
 - [ ] Consistently getting video tearing (glx), usually near the top of the window
 - [x] Pre-render grid in vmgr
 - [ ] Render primitives
-- [ ] Lighting
+- [x] Lighting

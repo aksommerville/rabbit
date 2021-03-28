@@ -112,4 +112,95 @@ int rb_image_check_bounds(
  */
 int rb_image_scroll(struct rb_image *image,int dx,int dy);
 
+/* Primitives.
+ ****************************************************************/
+ 
+void rb_image_fill_rect(struct rb_image *image,int x,int y,int w,int h,uint32_t argb);
+
+// Writes alpha verbatim, no blending.
+void rb_image_fill_circle(struct rb_image *image,int x,int y,int radius,uint32_t argb);
+
+void rb_image_circle_alpha_gradient(
+  struct rb_image *image,
+  int x,int y,
+  int radius,int gradius,
+  uint8_t abase
+);
+
+// (a) if (d<=0), (b) if (d>=1), otherwise somewhere in between.
+// Alpha blends like any other channel.
+uint32_t rb_argb_blend(uint32_t a,uint32_t b,double d);
+
+/* Replace every pixel in (image) with either 0, (main), or (edge).
+ * Everything opaque gets (main), adjacent to an opaque pixel gets (edge), and otherwise zero.
+ * For colorizing and outlining text, mostly.
+ * You may provide (dst), in which case (src) is read-only.
+ * Otherwise we create a scratch image and copy it back to (src) at the end.
+ */
+void rb_image_trace_edges(struct rb_image *dst,struct rb_image *src,uint32_t main,uint32_t edge);
+
+/* Replace each pixel with either (opaque) or (transparent).
+ * BLEND and DISCRETE images behave the same way, and OPAQUE fills entirely with (opaque).
+ */
+void rb_image_replace_by_alpha(struct rb_image *image,uint32_t opaque,uint32_t transparent);
+
+// 0=black ... 0xff=noop
+void rb_image_darken(struct rb_image *image,uint8_t brightness);
+
+/* Lighting.
+ * For fade-to-black or spotlight effects.
+ * Framebuffer gets darkened by a uniform amount, except for circles around designated light sources.
+ * This is expensive! Avoid if you don't need it, and use as few lights as possible.
+ ***************************************************************/
+ 
+struct rb_lights {
+  
+  /* 0x00: Full black. Underlying image is irrevocably destroyed.
+   * 0xff: Noop.
+   */
+  uint8_t bg;
+  
+  struct rb_light {
+    int id; // Constant
+    int x,y; // Position in world space.
+    
+    /* (radius) is the fully illuminated inner circle, and (gradius) the additional extent of fading out.
+     * Both must be >=0. If both are zero, the light is noop.
+     * I do recommend using gradius, even just 1 softens the circles' edges nicely.
+     * Gradients follow a quadratic curve, not linear.
+     * That's for computational simplicity, but also I think it looks better.
+     */
+    int radius;
+    int gradius;
+    
+    // Remainder for internal use:
+    int visible;
+    int ya,yz;
+    double inner,outer;
+    double adjust;
+  } *lightv;
+  int lightc,lighta;
+  struct rb_image *scratch;
+};
+
+void rb_lights_cleanup(struct rb_lights *lights);
+
+/* Add a light with id 0 to make up an unused id.
+ * Lights are not guaranteed to remain in the same order after drawing; 'get' fresh when you need it.
+ */
+struct rb_light *rb_lights_add(struct rb_lights *lights,int id);
+struct rb_light *rb_lights_get(const struct rb_lights *lights,int id);
+int rb_lights_remove(struct rb_lights *lights,int id);
+int rb_lights_clear(struct rb_lights *lights);
+
+/* Draw (lights->bgargb) over (dst), except where it intersects one of the lights.
+ * (scrollx,scrolly) is subtracted from each light position, normally you get this from vmgr.
+ * We only accept OPAQUE images.
+ */
+int rb_lights_draw(
+  struct rb_image *dst,
+  struct rb_lights *lights,
+  int scrollx,int scrolly
+);
+
 #endif

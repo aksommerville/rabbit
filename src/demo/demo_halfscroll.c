@@ -18,7 +18,7 @@ static int cameradsty=0;
 #define FULLSCREEN 1
 #define HALFSCREEN 2
 #define CONTINUOUS 3
-#define INTERVAL HALFSCREEN
+#define INTERVAL FULLSCREEN
 
 /* Update camera.
  * This is what we're really here for.
@@ -110,6 +110,7 @@ static const struct rb_sprite_type hero_sprite_type={
 };
 
 static int hero_sprite_update(struct rb_sprite *sprite) {
+
   const int speed=2;
   sprite->x+=SPRITE->dx*speed;
   sprite->y+=SPRITE->dy*speed;
@@ -117,6 +118,11 @@ static int hero_sprite_update(struct rb_sprite *sprite) {
   else if (sprite->x>vmgr->grid->w*16-8) sprite->x=vmgr->grid->w*16-8;
   if (sprite->y<8) sprite->y=8;
   else if (sprite->y>vmgr->grid->h*16-8) sprite->y=vmgr->grid->h*16-8;
+  
+  int a=(sprite->y*0xff)/(vmgr->grid->h*16);
+  if (a<0) a=0;
+  else if (a>0xff) a=0xff;
+
   return 0;
 }
 
