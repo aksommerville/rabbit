@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RB_DEFAULT_DEMO_NAME "lights"
+#define RB_DEFAULT_DEMO_NAME "multimidfile"
 
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \
@@ -21,7 +21,8 @@
   _(input_drivers) \
   _(inmgr) \
   _(halfscroll) \
-  _(lights)
+  _(lights) \
+  _(multimidfile)
   
 /* Define these things before including this header, if you don't want the defaults.
  */

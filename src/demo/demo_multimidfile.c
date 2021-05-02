@@ -1,25 +1,10 @@
 #include "rb_demo.h"
+#include "rabbit/rb_fs.h"
 #include "rabbit/rb_synth_node.h"
 #include "rabbit/rb_synth_event.h"
-#include "rabbit/rb_fs.h"
-#include <fcntl.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/poll.h>
-
-/*
-~/proj/rabbit> ls ../2020/midi/collection/joplin-scott/
-BreezeFromAlabama2.mid  EasyWinners.mid  favorite.mid  gladiols.mid  magnetic.mid  nonparel.mid  paragon.mid   ragdance.mid        smthngdn.mid  wallstrt.mid
-cascades.mid            elitesyn.mid     felicity.mid  kismet.mid    mapleaf.mid   original.mid  peachrne.mid  reflectn.mid        sugarcn.mid   weepwilo.mid
-cleopha.mid             entrtanr.mid     figleaf.mid   lilyquen.mid  newrag.mid    palmleaf.mid  pineapp.mid   SearchlightRag.mid  sunflowr.mid
-*/
-#define OSS_PATH "/dev/midi1"
-//#define FILE_PATH "src/demo/data/cleopha.mid"
-//#define FILE_PATH "src/demo/data/4-crow-no-maestro.mid"
-//#define FILE_PATH 0
-//#define FILE_PATH "../chetyorska/src/music/mutopia/02-lamortdase.mid"
-#define STR(a) #a
-#define FILE_PATH "../chetyorska/src/music/mutopia/" STR( \
-veliumov-great-doxology.mid )
 
 #define ENV(a,d,r) ( \
   RB_ENV_FLAG_PRESET| \
@@ -150,16 +135,7 @@ static const uint8_t synth_config[]={
     0x01,0x00, // main=buffer[0]
 };
 
-static int midiin_fd=-1;
-
-static void demo_midiin_quit() {
-  if (midiin_fd>=0) {
-    close(midiin_fd);
-    midiin_fd=-1;
-  }
-}
-
-static int demo_midiin_play_file(const char *path) {
+static int demo_multimidfile_play_file(const char *path) {
 
   int fd=open(path,O_RDONLY);
   if (fd<0) {
@@ -219,28 +195,42 @@ static int demo_midiin_play_file(const char *path) {
   return 0;
 }
 
-static int demo_midiin_init() {
+static char **mmf_pathv=0;
+static int mmf_pathc=0;
+static int mmf_patha=0;
+static int mmf_pathp=0;
 
-  //XXX TEMP Dump the encoded config into a file for use elsewhere.
-  if (0) {
-    const char *dstpath="src/demo/data/midiin.synth";
-    if (rb_file_write(dstpath,synth_config,sizeof(synth_config))>=0) {
-      fprintf(stderr,"%s: Wrote synth config, %d bytes.\n",dstpath,(int)sizeof(synth_config));
-    }
+static int mmf_add_directory_cb(
+  const char *path,int pathc,
+  const char *base,int basec,
+  char type,
+  void *userdata
+) {
+  if ((pathc<4)||memcmp(path+pathc-4,".mid",4)) {
+    fprintf(stderr,"%s: Ignoring, doesn't look like MIDI\n",path);
+    return 0;
   }
+  if (mmf_pathc>=mmf_patha) {
+    int na=mmf_patha+32;
+    if (na>INT_MAX/sizeof(void*)) return -1;
+    void *nv=realloc(mmf_pathv,sizeof(void*)*na);
+    if (!nv) return -1;
+    mmf_pathv=nv;
+    mmf_patha=na;
+  }
+  char *nv=malloc(pathc+1);
+  if (!nv) return -1;
+  memcpy(nv,path,pathc);
+  nv[pathc]=0;
+  mmf_pathv[mmf_pathc++]=nv;
+  return 0;
+}
 
-  if (OSS_PATH) {
-    if ((midiin_fd=open(OSS_PATH,O_RDONLY))<0) {
-      fprintf(stderr,"%s: Failed to open MIDI device -- does it exist?\n",OSS_PATH);
-      return -1;
-    }
-  }
-  if (FILE_PATH) {
-    if (demo_midiin_play_file(FILE_PATH)<0) {
-      fprintf(stderr,"%s: Failed to play MIDI file\n",FILE_PATH);
-      return -1;
-    }
-  }
+static int mmf_add_directory(const char *path) {
+  return rb_dir_read(path,mmf_add_directory_cb,0);
+}
+
+static int demo_multimidfile_init() {
   
   if (rb_audio_lock(rb_demo_audio)<0) return -1;
   if (rb_synth_configure(rb_demo_synth,synth_config,sizeof(synth_config))<0) {
@@ -249,31 +239,53 @@ static int demo_midiin_init() {
   }
   rb_audio_unlock(rb_demo_audio);
   
+  //demo_multimidfile_play_file("../chetyorska/src/music/mutopia/unpack/gnomus.mid");
+  if (mmf_add_directory("../chetyorska/src/music/mutopia/unpack")<0) {
+    fprintf(stderr,"failed to scan directory\n");
+  }
+  
   return 0;
 }
 
-static int demo_midiin_update() {
-  if (midiin_fd<0) return 0;
-  struct pollfd pollfd={.fd=midiin_fd,.events=POLLIN|POLLERR|POLLHUP};
-  if (poll(&pollfd,1,0)<=0) return 1;
-  char buf[1024];
-  int bufc=read(midiin_fd,buf,sizeof(buf));
-  if (bufc<=0) {
-    fprintf(stderr,"%s: Error reading.\n",OSS_PATH);
+static void demo_multimidfile_quit() {
+  if (mmf_pathv) {
+    while (mmf_pathc-->0) free(mmf_pathv[mmf_pathc]);
+    free(mmf_pathv);
+  }
+  mmf_pathv=0;
+  mmf_pathc=0;
+  mmf_patha=0;
+  mmf_pathp=0;
+}
+
+static int mmf_next() {
+  if (mmf_pathp>=mmf_pathc) {
+    fprintf(stderr,"end of song list\n");
     return 0;
   }
-  if (rb_audio_lock(rb_demo_audio)<0) return -1;
-  if (rb_synth_events(rb_demo_synth,buf,bufc)<0) {
-    if (rb_demo_synth->messagec) {
-      fprintf(stderr,"Synth error: %.*s\n",rb_demo_synth->messagec,rb_demo_synth->message);
-      rb_synth_clear_error(rb_demo_synth);
-    }
-    fprintf(stderr,"rb_synth_events() failed with %d bytes input\n",bufc);
-    rb_audio_unlock(rb_demo_audio);
-    return -1;
+  const char *path=mmf_pathv[mmf_pathp++];
+  if (demo_multimidfile_play_file(path)<0) {
+    fprintf(stderr,"%s: Failed to play file\n",path);
+  } else {
+    //fprintf(stderr,"%s\n",path); // already logged
   }
-  rb_audio_unlock(rb_demo_audio);
   return 1;
 }
 
-RB_DEMO(midiin)
+static int demo_multimidfile_update() {
+
+  if (!rb_demo_synth->song) {
+    return mmf_next();
+  }
+  
+  struct pollfd pollfd={.fd=STDIN_FILENO,.events=POLLIN|POLLERR|POLLHUP};
+  if (poll(&pollfd,1,0)>0) {
+    char tmp[128];
+    int tmpc=read(STDIN_FILENO,tmp,sizeof(tmp));
+    return mmf_next();
+  }
+
+  return 1;
+}
+
+RB_DEMO(multimidfile)

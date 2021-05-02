@@ -263,6 +263,18 @@ int rb_synth_play_song(struct rb_synth *synth,struct rb_song *song,int restart) 
   return 0;
 }
 
+/* Get song tempo phase.
+ */
+ 
+int rb_synth_get_song_phase(int *p,int *c,struct rb_synth *synth) {
+  *p=*c=0;
+  if (!synth->song) return 0;
+  if (synth->song->song->framesperqnote<1) return 0;
+  *c=synth->song->song->framesperqnote;
+  *p=synth->song->elapsedframes%(*c);
+  return 1;
+}
+
 /* Add PCM printer.
  */
 
@@ -350,7 +362,11 @@ int rb_synth_play_note(struct rb_synth *synth,uint8_t programid,uint8_t noteid) 
 int rb_synth_event(struct rb_synth *synth,const struct rb_synth_event *event) {
   switch (event->opcode) {
     case RB_SYNTH_EVENT_NOTE_ON: return rb_synth_play_note(synth,synth->chanv[event->chid&0x0f],event->a);
-    case RB_SYNTH_EVENT_PROGRAM: synth->chanv[event->chid&0x0f]=event->a; return 0;
+    case RB_SYNTH_EVENT_PROGRAM: {
+        synth->chanv[event->chid&0x0f]=event->a;
+        //fprintf(stderr,"Substituting 0x00 for program 0x%02x\n",event->a);//XXX
+        synth->chanv[event->chid&0x0f]=0x00;
+      } return 0;
     case RB_SYNTH_EVENT_ALL_OFF: return rb_synth_silence(synth);
     // Most events are no-op, wow this is brutally simple!
   }

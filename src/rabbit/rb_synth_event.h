@@ -38,6 +38,7 @@ struct rb_song {
   int repeatp;
   uint16_t *cmdv;
   int cmdc,cmda;
+  int framesperqnote;
 };
 
 /* Master rate is required to decode a song, and it becomes inextricably encoded in the song.
@@ -55,6 +56,7 @@ struct rb_song_player {
   int repeat;
   int cmdp;
   int delay; // consume this delay before reading (cmdp)
+  int elapsedframes;
 };
 
 struct rb_song_player *rb_song_player_new(struct rb_synth *synth,struct rb_song *song);

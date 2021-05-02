@@ -8,8 +8,9 @@
 /* It's silly to have more than 17 MTrk chunks.
  * (one for each channel, and an extra control track maybe?)
  * We forbid anything beyond that.
+ * ...update: For the classical music I'm downloading from http://www.kunstderfuge.com/tchaikovsky.htm, at least one has >17 MTrk.
  */
-#define RB_TRACK_LIMIT 17
+#define RB_TRACK_LIMIT 30
 
 struct rb_song_track {
   const uint8_t *v; // null if complete
@@ -194,6 +195,10 @@ static int rb_song_decode_tracks(
       framespertick=rb_song_frames_per_tick(ticksperqnote,usperqnote,rate);
     }
   }
+  
+  // Whatever the tempo is at the end, that's the global tempo for phase-reporting purposes.
+  if ((song->framesperqnote=(int)(framespertick*ticksperqnote))<0) song->framesperqnote=0;
+  
   return 0;
 }
 

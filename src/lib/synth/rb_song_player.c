@@ -50,6 +50,7 @@ int rb_song_player_ref(struct rb_song_player *player) {
 int rb_song_player_restart(struct rb_song_player *player) {
   player->cmdp=0;
   player->delay=0;
+  player->elapsedframes=0;
   return 0;
 }
 
@@ -64,6 +65,7 @@ int rb_song_player_update(struct rb_song_player *player) {
       if (player->repeat) {
         // When looping, always report at least one frame of delay.
         player->cmdp=player->song->repeatp;
+        player->elapsedframes=0; //TODO maybe need to support restart points that don't align with qnotes
         return 1;
       }
       return 0;
@@ -77,6 +79,25 @@ int rb_song_player_update(struct rb_song_player *player) {
         } break;
       case RB_SONG_CMD_NOTE: {
           uint8_t programid=(cmd>>7)&0x7f;
+          
+          switch (programid) {//XXX
+            case 0x00:
+            case 0x34:
+            case 0x35:
+            case 0x36:break;
+            default: {
+                uint8_t replacement;
+                switch (programid&3) {
+                  case 0: replacement=0x00; break;
+                  case 1: replacement=0x34; break;
+                  case 2: replacement=0x35; break;
+                  case 3: replacement=0x36; break;
+                }
+                //fprintf(stderr,"Replacing program 0x%02x with 0x%02x\n",programid,replacement);
+                programid=replacement;
+              }
+          }
+                
           uint8_t noteid=cmd&0x7f;
           if (rb_synth_play_note(player->synth,programid,noteid)<0) return -1;
         } break;
@@ -95,6 +116,7 @@ int rb_song_player_advance(struct rb_song_player *player,int framec) {
     return 0;
   }
   player->delay=0;
+  player->elapsedframes+=framec;
   // I guess mathematically speaking, we should deliver or skip events until (framec) depleted?
   // This situation is explicitly undefined.
   return 0;
