@@ -14,7 +14,7 @@ multiplex {
     fm rate note, mod1=0.5, range~1;
     env {
       time=0.75;
-      level=0.15;
+      level=0.05;
       0100 ff 50;
       0800 80 0;
       f000 00 110;
@@ -23,7 +23,12 @@ multiplex {
   
   0x38~0x43 instrument {
     osc rate note, shape=sawup;
-    env { attack=0; }
+    env {
+      level=0.10;
+      02 ff 0;
+      0c 80 0;
+      70 00 40;
+    }
   }
   
   0x44~0x7f instrument {

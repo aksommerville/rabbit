@@ -211,6 +211,7 @@ static void _rb_osc_update_triangle_ratev(struct rb_synth_node_runner *runner,in
     else *v=RUNNER->p*RUNNER->k-RCONFIG->level;
     RUNNER->p+=(*rate)*RCONFIG->invrate;
     if (RUNNER->p>=1.0f) RUNNER->p-=1.0f;
+    else if (RUNNER->p<0.0f) RUNNER->p+=1.0f;
   }
 }
  

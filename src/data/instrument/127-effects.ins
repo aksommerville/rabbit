@@ -1,0 +1,165 @@
+multiplex {
+
+  /* CH_SFX_THUD */
+  0x30 instrument {
+    env = {
+      main~1;
+      mode=set;
+      content {
+        level=2.0;
+        00 80;
+        08 ff;
+        08 c0;
+        30 90;
+      }
+    }
+    fm rate=100, mod0=12, range~1;
+    env {
+      time=1.50;
+      level=0.15;
+      0080 ff 50;
+      0800 60 0;
+      3000 00 100;
+    }
+  }
+  
+  /* CH_SFX_LINES */
+  0x31 instrument {
+    env = {
+      main~1;
+      mode=set;
+      content {
+        level=1000;
+        00 40;
+        80 ff;
+      }
+    }
+    fm rate~1 mod0=12 mod1=2.5 range=3;
+    env {
+      level=0.20;
+      04 ff;
+      10 30;
+      41 00;
+    }
+  }
+  
+  /* CH_SFX_TETRIS */
+  0x32 instrument {
+    env = {
+      main~1;
+      mode=set;
+      content {
+        level=2000;
+        00 40;
+        80 ff;
+      }
+    }
+    fm rate~1 mod0=12 mod1=2.5 range=2;
+    env {
+      level=0.20;
+      04 ff;
+      10 30;
+      41 00;
+    }
+  }
+  
+  /* CH_SFX_CHETORSKA */
+  0x33 instrument {
+    env = {
+      main~1;
+      mode=set;
+      content {
+        level=2000;
+        00 40;
+        80 ff;
+      }
+    }
+    fm rate~1 mod0=9 mod1=8.5 range=2.5;
+    env {
+      level=0.20;
+      04 ff;
+      10 30;
+      41 00;
+    }
+  }
+  
+  /* CH_SFX_GAMEOVER */
+  0x34 instrument {
+    env = {
+      main~1;
+      mode=set;
+      content {
+        level=300;
+        00 ff;
+        f0 40;
+      }
+    }
+    fm rate~1 mod0=12 mod1=5.5 range=3;
+    env {
+      level=0.20;
+      24 ff;
+      30 90;
+      71 00;
+    }
+  }
+  
+  /* CH_SFX_MOVE */
+  0x35 instrument {
+    osc rate=9 shape=sine main~1;
+    env = {
+      main~1;
+      content {
+        level=800.0;
+        00 80;
+        ff 80;
+      }
+    }
+    osc rate~1 shape=triangle;
+    env {
+      level=0.15;
+      08 ff;
+      10 20;
+      20 00;
+    }
+  }
+  
+  /* CH_SFX_ROTATE */
+  0x36 instrument {
+    osc rate=9 shape=sine main~1;
+    env = {
+      main~1;
+      content {
+        level=900.0;
+        00 40;
+        ff 80;
+      }
+    }
+    fm rate~1 mod1=1.9 range=9;
+    env {
+      level=0.15;
+      08 ff;
+      10 20;
+      20 00;
+    }
+  }
+  
+  /* CH_SFX_DROP */
+  0x37 instrument {
+    env = {
+      main~1;
+      mode=set;
+      content {
+        level=400.0;
+        00 c0;
+        c0 40;
+      }
+    }
+    fm rate~1 range=4 mod1=2.2;
+    env {
+      level=0.15;
+      08 ff;
+      10 20;
+      90 00;
+    }
+  }
+}

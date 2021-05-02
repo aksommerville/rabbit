@@ -162,7 +162,7 @@ static int rb_synth_update_signal_multi(int16_t *v,int c,int framec,struct rb_sy
     int ii=framec;
     while (ii-->0) {
       if (pcmrun->p>=pcmrun->pcm->c) break;
-      int16_t sample=pcmrun->pcm->v[pcmrun->p];
+      int16_t sample=pcmrun->pcm->v[pcmrun->p++];
       int jj=synth->chanc;
       while (jj-->0) {
         (*vv)+=sample;
@@ -364,8 +364,6 @@ int rb_synth_event(struct rb_synth *synth,const struct rb_synth_event *event) {
     case RB_SYNTH_EVENT_NOTE_ON: return rb_synth_play_note(synth,synth->chanv[event->chid&0x0f],event->a);
     case RB_SYNTH_EVENT_PROGRAM: {
         synth->chanv[event->chid&0x0f]=event->a;
-        //fprintf(stderr,"Substituting 0x00 for program 0x%02x\n",event->a);//XXX
-        synth->chanv[event->chid&0x0f]=0x00;
       } return 0;
     case RB_SYNTH_EVENT_ALL_OFF: return rb_synth_silence(synth);
     // Most events are no-op, wow this is brutally simple!

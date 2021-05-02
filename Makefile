@@ -44,8 +44,8 @@ edit:$(EXE_CLI);$(EXE_CLI)
 edit-%:$(EXE_CLI);$(EXE_CLI) $*
 demo:$(EXE_DEMO);$(EXE_DEMO)
 demo-%:$(EXE_DEMO);$(EXE_DEMO) $*
-test:$(EXE_ITEST) $(EXES_UTEST);RB_TEST_FILTER="" etc/tool/runtests.sh $^
-test-%:$(EXE_ITEST) $(EXES_UTEST);RB_TEST_FILTER="$*" etc/tool/runtests.sh $^
+test:$(EXE_ITEST) $(EXES_UTEST);RB_TEST_FILTER="" etc/tool/runtests.sh $(EXE_ITEST) $(EXES_UTEST)
+test-%:$(EXE_ITEST) $(EXES_UTEST);RB_TEST_FILTER="$*" etc/tool/runtests.sh $(EXE_ITEST) $(EXES_UTEST)
 clean:;rm -rf mid out
 
 #--------------------------------------------------
@@ -58,6 +58,7 @@ DATAPLAN:=$(DATAMIDDIR)/plan
 DATASRCFILES:=$(shell find $(DATASRCDIR) -type f)
 all:$(DATADST)
 $(EXE_DEMO):$(DATADST)
+$(EXE_ITEST):$(DATADST)
 
 ifneq ($(MAKECMDGOALS),clean)
   include $(DATAPLAN)
