@@ -53,7 +53,7 @@ static int _rb_group_find_sprite(const struct rb_sprite_group *group,const struc
           int ck=(lo+hi)>>1;
           const struct rb_sprite *q=group->v[ck];
                if (sprite<q) hi=ck;
-          else if (sprite>q) lo=ck=1;
+          else if (sprite>q) lo=ck+1;
           else return ck;
         }
         return -lo-1;

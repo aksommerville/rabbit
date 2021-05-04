@@ -42,6 +42,8 @@ struct rb_sprite_type {
   int (*render)(struct rb_image *dst,struct rb_sprite *sprite,int x,int y);
 };
 
+extern const struct rb_sprite_type rb_sprite_type_dummy;
+
 /* Sprite group.
  *****************************************************/
  

@@ -53,3 +53,11 @@ int rb_sprite_ref(struct rb_sprite *sprite) {
   sprite->refc++;
   return 0;
 }
+
+/* Dummy sprite type.
+ */
+ 
+const struct rb_sprite_type rb_sprite_type_dummy={
+  .name="dummy",
+  .objlen=sizeof(struct rb_sprite),
+};
