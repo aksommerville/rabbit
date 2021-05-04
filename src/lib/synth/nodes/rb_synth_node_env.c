@@ -297,6 +297,8 @@ static int rb_env_decode_long(struct rb_synth_node_config *config,const uint8_t 
     if (flags&RB_ENV_FLAG_CURVE) {
       if ((err=rb_env_decode_scalar_s8(&point->curve,src+srcp,srcc-srcp,1.0f))<1) return -1;
       srcp+=err;
+    } else {
+      point->curve=0.0f;
     }
   }
 
