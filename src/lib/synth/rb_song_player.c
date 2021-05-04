@@ -19,6 +19,7 @@ struct rb_song_player *rb_song_player_new(struct rb_synth *synth,struct rb_song 
   player->synth=synth;
   player->song=song;
   player->repeat=1;
+  player->tempomultiplier=1.0f;
   
   return player;
 }
@@ -74,8 +75,12 @@ int rb_song_player_update(struct rb_song_player *player) {
     uint16_t cmd=player->song->cmdv[player->cmdp++];
     switch (cmd&RB_SONG_CMD_TYPE_MASK) {
       case RB_SONG_CMD_DELAY: {
-          player->delay=cmd;
-          if (player->delay>0) return player->delay;
+          if (cmd) {
+            player->elapsedsourceframes+=cmd;
+            player->delay=cmd*player->tempomultiplier;
+            if (player->delay<1) player->delay=1;
+            return player->delay;
+          }
         } break;
       case RB_SONG_CMD_NOTE: {
           uint8_t programid=(cmd>>7)&0x7f;

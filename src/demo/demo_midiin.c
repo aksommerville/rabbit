@@ -19,7 +19,7 @@ cleopha.mid             entrtanr.mid     figleaf.mid   lilyquen.mid  newrag.mid 
 //#define FILE_PATH "../chetyorska/src/music/mutopia/02-lamortdase.mid"
 #define STR(a) #a
 #define FILE_PATH "../chetyorska/src/music/mutopia/" STR( \
-veliumov-great-doxology.mid )
+unpack/anitrasdance.mid )
 
 #define ENV(a,d,r) ( \
   RB_ENV_FLAG_PRESET| \
@@ -31,6 +31,68 @@ veliumov-great-doxology.mid )
 static const uint8_t synth_config[]={
 
   0x00,66, // bright cartoon piano
+    RB_SYNTH_NTID_instrument,
+    0x02,RB_SYNTH_FIELD_TYPE_SERIAL2,0,61, // nodes
+      RB_SYNTH_NTID_env,
+        0x01,0x01, // main
+        0x02,RB_SYNTH_FIELD_TYPE_U8,0x01, // mode=set
+        0x03,RB_SYNTH_FIELD_TYPE_SERIAL1,11, // content
+          RB_ENV_FLAG_INIT_LEVEL|RB_ENV_FLAG_LEVEL_RANGE,
+          0x00,0x01,0x00,
+          0x20,
+          0x08,0xff,
+          0x40,0xc0,
+          0xf0,0x80,
+        0,
+      RB_SYNTH_NTID_fm,
+        0x01,0x00, // main
+        0x02,RB_SYNTH_FIELD_TYPE_NOTEHZ, // rate
+        0x03,RB_SYNTH_FIELD_TYPE_S15_16,0x00,0x00,0x00,0x00, // mod0
+        0x04,RB_SYNTH_FIELD_TYPE_S15_16,0x00,0x01,0x00,0x00, // mod1
+        0x05,0x01, // range
+        0x00,
+      RB_SYNTH_NTID_env,
+        0x01,0x00, // main
+        0x03,RB_SYNTH_FIELD_TYPE_SERIAL1,13, // content
+          RB_ENV_FLAG_CURVE|RB_ENV_FLAG_LEVEL_RANGE,
+          0x00,0x00,0x10,
+          0x04,0xff,0xc0,
+          0x0c,0x50,0xc0,
+          0x80,0x00,0x60,
+        0x00,
+
+  0x28,66, // bright cartoon piano
+    RB_SYNTH_NTID_instrument,
+    0x02,RB_SYNTH_FIELD_TYPE_SERIAL2,0,61, // nodes
+      RB_SYNTH_NTID_env,
+        0x01,0x01, // main
+        0x02,RB_SYNTH_FIELD_TYPE_U8,0x01, // mode=set
+        0x03,RB_SYNTH_FIELD_TYPE_SERIAL1,11, // content
+          RB_ENV_FLAG_INIT_LEVEL|RB_ENV_FLAG_LEVEL_RANGE,
+          0x00,0x01,0x00,
+          0x20,
+          0x08,0xff,
+          0x40,0xc0,
+          0xf0,0x80,
+        0,
+      RB_SYNTH_NTID_fm,
+        0x01,0x00, // main
+        0x02,RB_SYNTH_FIELD_TYPE_NOTEHZ, // rate
+        0x03,RB_SYNTH_FIELD_TYPE_S15_16,0x00,0x00,0x00,0x00, // mod0
+        0x04,RB_SYNTH_FIELD_TYPE_S15_16,0x00,0x01,0x00,0x00, // mod1
+        0x05,0x01, // range
+        0x00,
+      RB_SYNTH_NTID_env,
+        0x01,0x00, // main
+        0x03,RB_SYNTH_FIELD_TYPE_SERIAL1,13, // content
+          RB_ENV_FLAG_CURVE|RB_ENV_FLAG_LEVEL_RANGE,
+          0x00,0x00,0x10,
+          0x04,0xff,0xc0,
+          0x0c,0x50,0xc0,
+          0x80,0x00,0x60,
+        0x00,
+
+  0x2d,66, // bright cartoon piano
     RB_SYNTH_NTID_instrument,
     0x02,RB_SYNTH_FIELD_TYPE_SERIAL2,0,61, // nodes
       RB_SYNTH_NTID_env,
@@ -215,6 +277,8 @@ static int demo_midiin_play_file(const char *path) {
     return -1;
   }
   
+  rb_demo_synth->song->tempomultiplier=1.0f;
+  
   fprintf(stderr,"%s: Playing MIDI file\n",path);
   return 0;
 }
@@ -252,7 +316,36 @@ static int demo_midiin_init() {
   return 0;
 }
 
+static float tmuld=1.005f;
+static int gbeatp=0;
+
 static int demo_midiin_update() {
+
+//TODO really ought to lock when checking tempo...
+
+  if (1&&rb_demo_synth&&rb_demo_synth->song) {
+    rb_demo_synth->song->tempomultiplier*=tmuld;
+    if (rb_demo_synth->song->tempomultiplier>=2.0f) {
+      tmuld=1.0f/tmuld;
+    } else if (rb_demo_synth->song->tempomultiplier<=0.5f) {
+      tmuld=1.0f/tmuld;
+    }
+  }
+  
+  if (1&&rb_demo_synth&&rb_demo_synth->song) {
+    int p=0,c=0;
+    if (rb_synth_get_song_phase(&p,&c,rb_demo_synth)>0) {
+      int beatp=p/c;
+      if (beatp>gbeatp) {
+        fprintf(stderr,"%d beat %d\n",beatp-gbeatp,beatp);
+        gbeatp=beatp;
+      } else if (beatp<gbeatp) {
+        fprintf(stderr,"reset %d\n",beatp);
+        gbeatp=beatp;
+      }
+    }
+  }
+
   if (midiin_fd<0) return 0;
   struct pollfd pollfd={.fd=midiin_fd,.events=POLLIN|POLLERR|POLLHUP};
   if (poll(&pollfd,1,0)<=0) return 1;

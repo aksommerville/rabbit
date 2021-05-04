@@ -271,7 +271,7 @@ int rb_synth_get_song_phase(int *p,int *c,struct rb_synth *synth) {
   if (!synth->song) return 0;
   if (synth->song->song->framesperqnote<1) return 0;
   *c=synth->song->song->framesperqnote;
-  *p=synth->song->elapsedframes%(*c);
+  *p=synth->song->elapsedsourceframes;
   return 1;
 }
 

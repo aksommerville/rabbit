@@ -81,9 +81,9 @@ int rb_synth_silence(struct rb_synth *synth);
 int rb_synth_play_song(struct rb_synth *synth,struct rb_song *song,int restart);
 
 /* Support for rhythm games!
- * If a song is playing and able to report its tempo, this populates (p,c) with the current position in an ideal qnote.
+ * (*p) is filled with the song's current position in frames, before tempomultiplier if present.
+ * (*c) is filled with the length of a qnote in frames, which for this to be useful must be constant.
  * (c<1) if tempo not available, eg no song playing.
- * (p) in (0..c-1): 0 is the very top of the qnote, c/2 is a perfect eighth note, etc.
  * Beware that this is quantized to the update window, so don't expect perfection.
  */
 int rb_synth_get_song_phase(int *p,int *c,struct rb_synth *synth);
