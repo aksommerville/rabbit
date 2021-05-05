@@ -332,7 +332,12 @@ static int rb_synth_add_pcm(struct rb_synth *synth,struct rb_pcm *pcm) {
  */
 
 int rb_synth_play_note(struct rb_synth *synth,uint8_t programid,uint8_t noteid) {
-  //fprintf(stderr,"%s %02x %02x\n",__func__,programid,noteid);
+  
+  if (synth->cb_play_note) {
+    int err=synth->cb_play_note(synth,programid,noteid);
+    if (err<=0) return err;
+  }
+  
   struct rb_pcm *pcm=0;
   struct rb_pcmprint *pcmprint=0;
   if (rb_program_store_get_note(&pcm,&pcmprint,synth->program_store,programid,noteid)<0) {

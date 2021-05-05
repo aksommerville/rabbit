@@ -36,6 +36,12 @@ struct rb_synth {
   
   char *message;
   int messagec;
+  
+  /* Added for integration-test support, but might have uses in the field too?
+   * Set directly if interested.
+   */
+  void *userdata;
+  int (*cb_play_note)(struct rb_synth *synth,uint8_t programid,uint8_t noteid); // 0 to suppress, 1 to proceed
 };
 
 /* (rate) in Hertz, must match the driver.
