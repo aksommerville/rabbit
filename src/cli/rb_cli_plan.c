@@ -93,6 +93,8 @@ static int rb_cli_plan_cb_image(
   const char *subpath=path+context->srcdirlen;
   int subpathc=pathc-context->srcdirlen;
   
+  while ((subpathc>=1)&&(subpath[0]=='/')) { subpath++; subpathc--; }
+  
   fprintf(context->dstf,"DATAMIDFILES+=$(DATAMIDDIR)/%.*s\n",subpathc,subpath);
   fprintf(context->dstf,"$(DATAMIDDIR)/%.*s:%.*s $(EXE_CLI);$(PRECMD) $(EXE_CLI) imagec --dst=$@ --data=$<\n",subpathc,subpath,pathc,path);
   
@@ -152,6 +154,8 @@ int rb_cli_main_plan(struct rb_cli *cli) {
     }
   }
   
+  fprintf(context.dstf,"ifndef DATAMIDDIR\n$(error Please define DATAMIDDIR)\nendif\n");
+  fprintf(context.dstf,"ifndef EXE_CLI\n$(error Please define EXE_CLI)\nendif\n");
   fprintf(context.dstf,"DATAMIDFILES:=\n");
   
   if (rb_dir_read(cli->datapath,rb_cli_plan_cb_outer,&context)<0) {
