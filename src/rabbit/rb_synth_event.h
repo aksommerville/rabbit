@@ -59,6 +59,8 @@ struct rb_song_player {
   int elapsedframes; // after multiplier; probably not useful
   int elapsedsourceframes; // before multiplier, so the song's natural beat
   float tempomultiplier;
+  float invtempomultiplier;
+  int elapsedsourceframesnext;
 };
 
 struct rb_song_player *rb_song_player_new(struct rb_synth *synth,struct rb_song *song);

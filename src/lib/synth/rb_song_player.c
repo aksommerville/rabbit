@@ -76,7 +76,8 @@ int rb_song_player_update(struct rb_song_player *player) {
     switch (cmd&RB_SONG_CMD_TYPE_MASK) {
       case RB_SONG_CMD_DELAY: {
           if (cmd) {
-            player->elapsedsourceframes+=cmd;
+            player->elapsedsourceframesnext=player->elapsedsourceframes+cmd;
+            player->invtempomultiplier=1.0/player->tempomultiplier;
             player->delay=cmd*player->tempomultiplier;
             if (player->delay<1) player->delay=1;
             return player->delay;
@@ -98,8 +99,13 @@ int rb_song_player_update(struct rb_song_player *player) {
 int rb_song_player_advance(struct rb_song_player *player,int framec) {
   if (framec<1) return 0;
   player->elapsedframes+=framec;
+  player->elapsedsourceframes+=framec*player->invtempomultiplier;
   if (framec<=player->delay) {
     player->delay-=framec;
+    if (!player->delay) {
+      // We may accrue some error due to invtempomultiplier; snap out of it here:
+      player->elapsedsourceframes=player->elapsedsourceframesnext;
+    }
     return 0;
   }
   player->delay=0;
