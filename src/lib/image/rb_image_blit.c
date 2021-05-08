@@ -414,3 +414,40 @@ int rb_image_scroll(struct rb_image *image,int dx,int dy) {
   
   return 0;
 }
+
+/* Blit with align and recolor.
+ */
+ 
+static uint32_t rb_blend_recolor(uint32_t dst,uint32_t src,void *userdata) {
+  return (uint32_t)(uintptr_t)userdata;
+}
+ 
+int rb_image_blit_recolor(
+  struct rb_image *dst,int refx,int refy,
+  struct rb_image *src,
+  int align,
+  uint32_t argb
+) {
+  if (!dst||!src) return -1;
+  
+  int alignx=0,aligny=0;
+  switch (align) {
+    case RB_ALIGN_NW: alignx=-1; aligny=-1; break;
+    case RB_ALIGN_N:             aligny=-1; break;
+    case RB_ALIGN_NE: alignx= 1; aligny=-1; break;
+    case RB_ALIGN_W:  alignx=-1;            break;
+    case RB_ALIGN_E:  alignx= 1;            break;
+    case RB_ALIGN_SW: alignx=-1; aligny= 1; break;
+    case RB_ALIGN_S:             aligny= 1; break;
+    case RB_ALIGN_SE: alignx= 1; aligny= 1; break;
+  }
+  int dstx,dsty;
+  if (alignx<0) dstx=refx;
+  else if (alignx>0) dstx=refx-src->w;
+  else dstx=refx-(src->w>>1);
+  if (aligny<0) dsty=refy;
+  else if (aligny>0) dsty=refy-src->h;
+  else dsty=refy-(src->h>>1);
+  
+  return rb_image_blit_safe(dst,dstx,dsty,src,0,0,src->w,src->h,0,rb_blend_recolor,(void*)(uintptr_t)argb);
+}

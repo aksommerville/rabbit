@@ -15,6 +15,19 @@
 #define RB_XFORM_YREV    2
 #define RB_XFORM_SWAP    4
 
+/* Image alignment.
+ * For cases where the blitter selects exact output position.
+ */
+#define RB_ALIGN_CENTER 0
+#define RB_ALIGN_NW     1
+#define RB_ALIGN_N      2
+#define RB_ALIGN_NE     3
+#define RB_ALIGN_W      4
+#define RB_ALIGN_E      5
+#define RB_ALIGN_SW     6
+#define RB_ALIGN_S      7
+#define RB_ALIGN_SE     8
+
 /* Renderable image is 32-bit ARGB. (Alpha in the most-significant byte)
  * Dimensions are fixed at construction.
  ****************************************************/
@@ -111,6 +124,18 @@ int rb_image_check_bounds(
  * This leaves a column or row of duplicated pixels on one side.
  */
 int rb_image_scroll(struct rb_image *image,int dx,int dy);
+
+/* Blit all of (src) onto (dst), with a single output point and alignment.
+ * All opaque pixels are replaced by (argb).
+ * Source image should be COLORKEY or DISCRETE.
+ * Intended for copying text labels.
+ */
+int rb_image_blit_recolor(
+  struct rb_image *dst,int dstx,int dsty,
+  struct rb_image *src,
+  int align,
+  uint32_t argb
+);
 
 /* Primitives.
  ****************************************************************/
