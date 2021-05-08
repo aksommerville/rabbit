@@ -7,8 +7,9 @@
 extern const struct rb_video_type rb_video_type_glx;
  
 static const struct rb_video_type *rb_video_typev[]={
-//TODO conditionalize optional types
+#if RB_USE_glx
   &rb_video_type_glx,
+#endif
 };
 
 /* Get type by name.

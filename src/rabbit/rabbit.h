@@ -6,6 +6,9 @@
 
 #include <stdint.h>
 
+#define RB_ARCH_linux 1
+#define RB_ARCH_macos 2
+
 // Drivers.
 struct rb_video;
 struct rb_video_type;

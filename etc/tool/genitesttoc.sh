@@ -6,7 +6,8 @@ if [ "$#" -lt 1 ] ; then
 fi
 
 TOC=mid/itesttoc.tmp
-echo -n "" >"$TOC"
+rm -f "$TOC"
+touch "$TOC"
 
 while [ "$#" -gt 1 ] ; do
   SRCPATH="$1"

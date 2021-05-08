@@ -7,8 +7,9 @@
 extern const struct rb_audio_type rb_audio_type_pulse;
  
 static const struct rb_audio_type *rb_audio_typev[]={
-//TODO conditionalize optional types
+#if RB_USE_pulse
   &rb_audio_type_pulse,
+#endif
 };
 
 /* Get type by name.

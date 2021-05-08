@@ -2,10 +2,7 @@ all:
 .SILENT:
 PRECMD=echo "  $(@F)" ; mkdir -p $(@D) ;
 
-CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit
-LD:=gcc
-LDPOST:=-lz -lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lpthread
-AR:=ar rc
+include etc/make/configure.mk
 
 GENERATED_FILES:=$(addprefix mid/, \
   test/int/rb_itest_toc.h \
@@ -14,6 +11,11 @@ GENERATED_FILES:=$(addprefix mid/, \
 CFILES:=$(shell find src -name '*.c') $(filter %.c,$(GENERATED_FILES))
 OFILES_ALL:=$(addsuffix .o,$(patsubst src/%.c,mid/%,$(CFILES)))
 -include $(OFILES_ALL:.o=.d)
+
+OPT_AVAILABLE:=$(notdir $(wildcard src/lib/opt/*))
+OPT_IGNORE:=$(filter-out $(OPT_ENABLE),$(OPT_AVAILABLE))
+OFILES_ALL:=$(filter-out $(addsuffix /%,$(addprefix mid/lib/opt/,$(OPT_IGNORE))),$(OFILES_ALL))
+CC+=$(foreach U,$(OPT_ENABLE),-DRB_USE_$U=1)
 
 mid/%.o:src/%.c;$(PRECMD) $(CC) -o $@ $<
 

@@ -3,6 +3,8 @@
  * We operate on directories recursively, but only directories that exist at construction.
  * (detecting directory changes via inotify I'm sure is possible, but why complicate it?)
  * We ignore anything with a leading dot name, directories and files alike.
+ *
+ * You can always create one of these, but on non-Linux systems it will be no-op.
  */
  
 #ifndef RB_SRCMON_H

@@ -1,7 +1,11 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_image.h"
 #include <math.h>
-#include <endian.h>
+#if RB_ARCH==RB_ARCH_macos
+  #include <machine/endian.h>
+#else
+  #include <endian.h>
+#endif
 
 /* Cleanup.
  */

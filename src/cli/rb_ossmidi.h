@@ -2,6 +2,8 @@
  * Simple interface to OSS MIDI-In (which is itself a gloriously simple interface to the MIDI bus).
  * ALSA and Pulse systems likely emulate this interface, mine does.
  * (doing things the ALSA way is quite a bit more involved, meh...)
+ *
+ * It's safe to create one under non-Linux systems, but it will be no-op.
  */
  
 #ifndef RB_OSSMIDI_H

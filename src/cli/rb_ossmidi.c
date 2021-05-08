@@ -1,6 +1,9 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_fs.h"
 #include "rb_ossmidi.h"
+
+#if RB_ARCH==RB_ARCH_linux
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/poll.h>
@@ -287,3 +290,23 @@ int rb_ossmidi_update(
   
   return 0;
 }
+
+#else
+
+struct rb_ossmidi *rb_ossmidi_new(const char *path,int pathc) {
+  return calloc(1,sizeof(struct rb_ossmidi));
+}
+
+void rb_ossmidi_del(struct rb_ossmidi *ossmidi) {
+  if (ossmidi) free(ossmidi);
+}
+
+int rb_ossmidi_update(
+  struct rb_ossmidi *ossmidi,
+  int (*cb_serial)(const void *src,int srcc,const char *path,void *userdata),
+  void *userdata
+) {
+  return 0;
+}
+
+#endif

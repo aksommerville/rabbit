@@ -7,8 +7,9 @@
 extern const struct rb_input_type rb_input_type_evdev;
 
 static const struct rb_input_type *rb_input_typev[]={
-  //TODO compile-time flags
+#if RB_USE_evdev
   &rb_input_type_evdev,
+#endif
 };
  
 /* Get type from registry.

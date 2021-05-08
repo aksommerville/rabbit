@@ -104,7 +104,7 @@ static int rb_cli_receive_arg(struct rb_cli *cli,const char *k,int kc,const char
         n+=digit; \
       } \
       if ((n<lo)||(n>hi)) { \
-        fprintf(stderr,"%s: '%s' must be in %d..%d (have %d)\n",cli->exename,kc,k,lo,hi,n); \
+        fprintf(stderr,"%s: '%.*s' must be in %d..%d (have %d)\n",cli->exename,kc,k,lo,hi,n); \
         return -1; \
       } \
       cli->fldname=n; \

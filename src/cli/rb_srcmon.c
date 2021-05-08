@@ -1,5 +1,8 @@
 #include "rabbit/rb_internal.h"
 #include "rb_srcmon.h"
+
+#if RB_ARCH==RB_ARCH_linux
+
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/poll.h>
@@ -362,3 +365,23 @@ int rb_srcmon_update(
   if (rb_srcmon_read_inotify(srcmon)<0) return -1;
   return rb_srcmon_report_inotify_events(srcmon,cb_changed,userdata);
 }
+
+#else /* not linux, create stubs */
+
+struct rb_srcmon *rb_srcmon_new(const char *path,int pathc) {
+  return calloc(1,sizeof(struct rb_srcmon));
+}
+
+void rb_srcmon_del(struct rb_srcmon *srcmon) {
+  if (srcmon) free(srcmon);
+}
+
+int rb_srcmon_update(
+  struct rb_srcmon *srcmon,
+  int (*cb_changed)(const char *base,int basec,const char *path,int pathc,void *userdata),
+  void *userdata
+) {
+  return 0;
+}
+
+#endif
