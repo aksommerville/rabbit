@@ -19,7 +19,7 @@ All types defined by Rabbit will consist of lowercase letters, digits, or unders
 
 Types:
   imag Image (PNG; maybe other format?)
-  song Song (MIDI)
+  song Song (our format, not MIDI)
   snth Synth program
   grid Grid
   text Loose text

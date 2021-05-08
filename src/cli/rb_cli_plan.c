@@ -73,9 +73,11 @@ static int rb_cli_plan_cb_song(
   struct rb_plan_context *context=userdata;
   const char *subpath=path+context->srcdirlen;
   int subpathc=pathc-context->srcdirlen;
+  int dstsubpathc=subpathc;
+  if ((subpathc>=4)&&!memcmp(subpath+subpathc-4,".mid",4)) dstsubpathc-=4;
   
-  fprintf(context->dstf,"DATAMIDFILES+=$(DATAMIDDIR)/%.*s\n",subpathc,subpath);
-  fprintf(context->dstf,"$(DATAMIDDIR)/%.*s:%.*s;$(PRECMD) cp $< $@\n",subpathc,subpath,pathc,path);
+  fprintf(context->dstf,"DATAMIDFILES+=$(DATAMIDDIR)/%.*s.song\n",dstsubpathc,subpath);
+  fprintf(context->dstf,"$(DATAMIDDIR)/%.*s.song:%.*s;$(PRECMD) $(EXE_CLI) songc --dst=$@ --data=$<\n",dstsubpathc,subpath,pathc,path);
   
   return 0;
 }

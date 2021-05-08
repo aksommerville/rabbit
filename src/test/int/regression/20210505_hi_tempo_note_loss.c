@@ -36,16 +36,16 @@ RB_ITEST(defect_20210505_hi_tempo_note_loss,regression) {
    * On further review, yeah, I think it was all in my head.
    */
   void *serial=0;
-  int serialc=rb_file_read(&serial,"../chetyorska/src/data/anitrasdance.mid");
+  int serialc=rb_file_read(&serial,"../chetyorska/src/data/song/001-anitrasdance.mid");
   RB_ASSERT_CALL(serialc)
-  struct rb_song *song=rb_song_new(serial,serialc,synth->rate);
+  struct rb_song *song=rb_song_from_midi(serial,serialc);
   free(serial);
   RB_ASSERT(song)
   RB_ASSERT_CALL(rb_synth_play_song(synth,song,1))
   rb_song_del(song);
   
   synth->song->repeat=0;
-  synth->song->tempomultiplier=0.5;
+  rb_song_player_adjust_tempo(synth->song,0.5);
   
   int panic=1000000;
   while (1) {

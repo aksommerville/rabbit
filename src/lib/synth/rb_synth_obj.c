@@ -269,9 +269,9 @@ int rb_synth_play_song(struct rb_synth *synth,struct rb_song *song,int restart) 
 int rb_synth_get_song_phase(int *p,int *c,struct rb_synth *synth) {
   *p=*c=0;
   if (!synth->song) return 0;
-  if (synth->song->song->framesperqnote<1) return 0;
-  *c=synth->song->song->framesperqnote;
-  *p=synth->song->elapsedsourceframes;
+  if (synth->song->song->ticksperqnote<1) return 0;
+  *c=synth->song->song->ticksperqnote;
+  *p=synth->song->elapsedinput;
   return 1;
 }
 

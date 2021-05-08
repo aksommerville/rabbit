@@ -8,8 +8,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#define FILE_PATH "src/demo/data/cleopha.mid"
-//#define FILE_PATH "src/demo/data/4-crow-no-maestro.mid"
+#define FILE_PATH "src/data/song/001-anitrasdance.mid"
 //#define FILE_PATH 0
 
 #define RATE 44100
@@ -70,7 +69,7 @@ static int demo_midiredline_play_file(struct rb_synth *synth,const char *path) {
   }
   close(fd);
   
-  struct rb_song *song=rb_song_new(serial,serialc,synth->rate);
+  struct rb_song *song=rb_song_from_midi(serial,serialc);
   free(serial);
   if (!song) {
     fprintf(stderr,"%s: Failed to decode MIDI file\n",path);

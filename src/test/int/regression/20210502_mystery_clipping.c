@@ -66,15 +66,16 @@ RB_ITEST(defect_20210502_mystery_clipping,regression) {
   if (listen) { RB_ASSERT_CALL(rb_audio_lock(audio)) }
   RB_ASSERT_CALL(rb_archive_read("out/data",cb_archive,synth))
   void *serial=0;
-  //int serialc=rb_file_read(&serial,"../chetyorska/src/data/dvorak-o96-3.mid");
-  int serialc=rb_file_read(&serial,"../chetyorska/src/data/Mvt3_Scherzo.mid");
+  int serialc=rb_file_read(&serial,"../chetyorska/src/data/song/005-dvorak-o96-3.mid");
   RB_ASSERT_CALL(serialc)
-  struct rb_song *song=rb_song_new(serial,serialc,synth->rate);
+  struct rb_song *song=rb_song_from_midi(serial,serialc);
   free(serial);
   RB_ASSERT(song)
   RB_ASSERT_CALL(rb_synth_play_song(synth,song,1))
   rb_song_del(song);
   if (listen) { RB_ASSERT_CALL(rb_audio_unlock(audio)) }
+  
+  synth->song->repeat=0;
   
   int phase=0;
   while (1) {
@@ -86,9 +87,8 @@ RB_ITEST(defect_20210502_mystery_clipping,regression) {
       RB_ASSERT_CALL(rb_synth_update(tmp,1024,synth))
     }
     if (!synth->song) break;
-    if (synth->song->elapsedframes>=44100*5) break;
     
-    int nextphase=synth->song->elapsedframes/7000;
+    int nextphase=synth->song->elapsedinput/70;
          if ((nextphase>=1)&&(phase<1)) { playsound(audio,synth,0x7f35); phase=1; }
     else if ((nextphase>=2)&&(phase<2)) { playsound(audio,synth,0x7f35); phase=2; }
     else if ((nextphase>=3)&&(phase<3)) { playsound(audio,synth,0x7f35); phase=3; }

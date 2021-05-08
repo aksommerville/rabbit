@@ -18,6 +18,7 @@ struct rb_ossmidi;
 #define RB_CLI_COMMAND_archive 4
 #define RB_CLI_COMMAND_synthc  5
 #define RB_CLI_COMMAND_imagec  6
+#define RB_CLI_COMMAND_songc   7
  
 struct rb_cli {
 // argv:
@@ -73,6 +74,7 @@ int rb_cli_main_plan(struct rb_cli *cli);
 int rb_cli_main_archive(struct rb_cli *cli);
 int rb_cli_main_synthc(struct rb_cli *cli);
 int rb_cli_main_imagec(struct rb_cli *cli);
+int rb_cli_main_songc(struct rb_cli *cli);
 
 /* Helpers for serial data.
  ************************************************************/
@@ -85,6 +87,7 @@ int rb_cli_main_imagec(struct rb_cli *cli);
 #define RB_FTYPE_SND            5 /* Text sound effect (combines into a multiplex program) */
 #define RB_FTYPE_SYNTHAR        6 /* Binary synthesizer archive */
 #define RB_FTYPE_PNG            7 /* Standard PNG */
+#define RB_FTYPE_SONG           8 /* Rabbit song */
 
 // Mostly trusts the path's suffix, but may also examine leading directory names.
 int rb_ftype_from_path(const char *path,int pathc);

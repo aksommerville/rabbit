@@ -48,6 +48,7 @@ int rb_ftype_from_path(const char *path,int pathc) {
         } break;
       case 4: {
           if (!memcmp(sfx,"jpeg",4)) return RB_FTYPE_OTHER;
+          if (!memcmp(sfx,"song",4)) return RB_FTYPE_SONG;
         } break;
       case 5: {
           if (!memcmp(sfx,"synth",5)) return RB_FTYPE_SYNTHAR;

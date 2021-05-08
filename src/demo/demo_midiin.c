@@ -258,7 +258,7 @@ static int demo_midiin_play_file(const char *path) {
   }
   close(fd);
   
-  struct rb_song *song=rb_song_new(serial,serialc,rb_demo_audio->delegate.rate);
+  struct rb_song *song=rb_song_from_midi(serial,serialc);
   free(serial);
   if (!song) {
     fprintf(stderr,"%s: Failed to decode MIDI file\n",path);
@@ -276,8 +276,6 @@ static int demo_midiin_play_file(const char *path) {
     fprintf(stderr,"rb_synth_play_song() failed\n");
     return -1;
   }
-  
-  rb_demo_synth->song->tempomultiplier=1.0f;
   
   fprintf(stderr,"%s: Playing MIDI file\n",path);
   return 0;
@@ -316,35 +314,7 @@ static int demo_midiin_init() {
   return 0;
 }
 
-static float tmuld=1.005f;
-static int gbeatp=0;
-
 static int demo_midiin_update() {
-
-//TODO really ought to lock when checking tempo...
-
-  if (1&&rb_demo_synth&&rb_demo_synth->song) {
-    rb_demo_synth->song->tempomultiplier*=tmuld;
-    if (rb_demo_synth->song->tempomultiplier>=2.0f) {
-      tmuld=1.0f/tmuld;
-    } else if (rb_demo_synth->song->tempomultiplier<=0.5f) {
-      tmuld=1.0f/tmuld;
-    }
-  }
-  
-  if (1&&rb_demo_synth&&rb_demo_synth->song) {
-    int p=0,c=0;
-    if (rb_synth_get_song_phase(&p,&c,rb_demo_synth)>0) {
-      int beatp=p/c;
-      if (beatp>gbeatp) {
-        fprintf(stderr,"%d beat %d\n",beatp-gbeatp,beatp);
-        gbeatp=beatp;
-      } else if (beatp<gbeatp) {
-        fprintf(stderr,"reset %d\n",beatp);
-        gbeatp=beatp;
-      }
-    }
-  }
 
   if (midiin_fd<0) return 0;
   struct pollfd pollfd={.fd=midiin_fd,.events=POLLIN|POLLERR|POLLHUP};

@@ -172,7 +172,7 @@ static int demo_multimidfile_play_file(const char *path) {
   }
   close(fd);
   
-  struct rb_song *song=rb_song_new(serial,serialc,rb_demo_audio->delegate.rate);
+  struct rb_song *song=rb_song_from_midi(serial,serialc);
   free(serial);
   if (!song) {
     fprintf(stderr,"%s: Failed to decode MIDI file\n",path);

@@ -19,7 +19,11 @@ struct rb_song_player *rb_song_player_new(struct rb_synth *synth,struct rb_song 
   player->synth=synth;
   player->song=song;
   player->repeat=1;
-  player->tempomultiplier=1.0f;
+  player->tempoadjust=1.0f;
+  
+  player->naturaltempo=((float)synth->rate*(float)song->uspertick)/1000000.0f;
+  player->framespertick=player->naturaltempo;
+  player->ticksperframe=1.0f/player->framespertick;
   
   return player;
 }
@@ -51,7 +55,13 @@ int rb_song_player_ref(struct rb_song_player *player) {
 int rb_song_player_restart(struct rb_song_player *player) {
   player->cmdp=0;
   player->delay=0;
-  player->elapsedframes=0;
+  player->tempoadjust=1.0f;
+  player->naturaltempo=((float)player->synth->rate*(float)player->song->uspertick)/1000000.0f;
+  player->framespertick=player->naturaltempo;
+  player->ticksperframe=1.0f/player->framespertick;
+  player->elapsedoutput=0;
+  player->elapsedinput=0;
+  player->elapsedinputnext=0;
   return 0;
 }
 
@@ -66,7 +76,7 @@ int rb_song_player_update(struct rb_song_player *player) {
       if (player->repeat) {
         // When looping, always report at least one frame of delay.
         player->cmdp=player->song->repeatp;
-        player->elapsedframes=0; //TODO maybe need to support restart points that don't align with qnotes
+        //TODO maybe need to support restart points that don't align with qnotes
         return 1;
       }
       return 0;
@@ -75,11 +85,12 @@ int rb_song_player_update(struct rb_song_player *player) {
     uint16_t cmd=player->song->cmdv[player->cmdp++];
     switch (cmd&RB_SONG_CMD_TYPE_MASK) {
       case RB_SONG_CMD_DELAY: {
-          if (cmd) {
-            player->elapsedsourceframesnext=player->elapsedsourceframes+cmd;
-            player->invtempomultiplier=1.0/player->tempomultiplier;
-            player->delay=cmd*player->tempomultiplier;
-            if (player->delay<1) player->delay=1;
+          int ticks=cmd;
+          if (ticks) {
+            int frames=(int)(ticks*player->framespertick);
+            if (frames<1) frames=1;
+            player->elapsedinputnext=player->elapsedinput+ticks;
+            player->delay=frames;
             return player->delay;
           }
         } break;
@@ -98,18 +109,30 @@ int rb_song_player_update(struct rb_song_player *player) {
  
 int rb_song_player_advance(struct rb_song_player *player,int framec) {
   if (framec<1) return 0;
-  player->elapsedframes+=framec;
-  player->elapsedsourceframes+=framec*player->invtempomultiplier;
+  player->elapsedoutput+=framec;
+  player->elapsedinput+=(int)(framec*player->ticksperframe);
   if (framec<=player->delay) {
     player->delay-=framec;
     if (!player->delay) {
-      // We may accrue some error due to invtempomultiplier; snap out of it here:
-      player->elapsedsourceframes=player->elapsedsourceframesnext;
+      // We may accrue some error; snap out of it here:
+      player->elapsedinput=player->elapsedinputnext;
     }
     return 0;
   }
   player->delay=0;
   // I guess mathematically speaking, we should deliver or skip events until (framec) depleted?
   // This situation is explicitly undefined.
+  return 0;
+}
+
+/* Set tempo adjustment.
+ */
+ 
+int rb_song_player_adjust_tempo(struct rb_song_player *player,float adjust) {
+  if (adjust<=0.0f) return -1;
+  if (adjust>=10.0f) return -1;
+  player->tempoadjust=adjust;
+  player->framespertick=player->naturaltempo*player->tempoadjust;
+  player->ticksperframe=1.0f/player->framespertick;
   return 0;
 }

@@ -1,5 +1,23 @@
 Rabbit Audio Serial Formats
 
+===== song ==================================================
+
+Tempo is declared in the header, it must be fixed for the whole song.
+The only event we can express is Note On, because that's all the synthesizer can do :)
+
+16-byte header:
+  0000  4 Signature: "r\xabSg"
+  0004  2 us/tick -- longest possible tick is about 15 Hz
+  0006  2 ticks/qnote
+  0008  8 Reserved, zero
+  0010
+  
+Followed by events, 2 bytes each, top 2 bits are the command:
+  0000 DELAY, 3fff=delay in ticks
+  4000 reserved
+  8000 NOTE, 3f80=programid, 007f=noteid
+  c000 reserved
+
 ===== program store =========================================
 
 Deliver to rb_synth_configure().

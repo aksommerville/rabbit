@@ -16,7 +16,7 @@ struct rb_song_track {
   const uint8_t *v; // null if complete
   int c;
   int p;
-  int delay; // in ticks; convert to frames at the very end; <0 if not read yet
+  int delay; // in ticks; <0 if not read yet
   uint8_t rstat;
 };
 
@@ -60,14 +60,12 @@ static int rb_song_tracks_require_delay(struct rb_song_track *track,int trackc) 
   return lodelay;
 }
 
-/* Convert a delay in ticks to frames and add it to (song->cmdv).
+/* Add a delay command in ticks.
  */
  
-static int rb_song_add_delay(struct rb_song *song,int tickc,double framespertick) {
-  int framec=tickc*framespertick;
-  if (framec<1) framec=1;
-  int fullc=framec>>14;
-  int partc=framec&0x3fff;
+static int rb_song_add_delay(struct rb_song *song,int tickc) {
+  int fullc=tickc>>14;
+  int partc=tickc&0x3fff;
   if (rb_song_cmdv_require(song,fullc+1)<0) return -1;
   while (fullc-->0) song->cmdv[song->cmdc++]=RB_SONG_CMD_DELAY|0x3fff;
   if (partc) song->cmdv[song->cmdc++]=RB_SONG_CMD_DELAY|partc;
@@ -117,7 +115,21 @@ static int rb_song_add_event(
     return 0;
   }
   
-  // Set Tempo was handled by our caller...
+  // Set Tempo.
+  if ((event->opcode==0xff)&&(event->a==0x51)&&(event->c==3)) {
+    int usperqnote=(event->v[0]<<16)|(event->v[1]<<8)|event->v[2];
+    int ntempo=usperqnote/song->ticksperqnote;
+    if (ntempo<1) ntempo=1;
+    if (!song->uspertick) {
+      song->uspertick=ntempo;
+    } else if (ntempo!=song->uspertick) {
+      // Song changes tempo -- we choose not to support that.
+      fprintf(stderr,"ERROR! Tempo changes not supported (%d => %d)\n",song->uspertick,ntempo);
+      return -1;
+    }
+    return 0;
+  }
+  
   // ...i guess that's everything.
   return 0;
 }
@@ -131,7 +143,6 @@ static int rb_song_decode_time_zero(
   struct rb_song_track *track,int trackc,
   uint8_t *chanv
 ) {
-  int usperqnote=0;
   for (;trackc-->0;track++) {
     if (!track->v) continue;
     if (track->delay) continue;
@@ -141,32 +152,17 @@ static int rb_song_decode_time_zero(
     if (err<=0) return -1; // malformed event
     track->p+=err;
     track->delay=-1;
-    if ((event.opcode==0xff)&&(event.a==0x51)&&(event.c==3)) { // Set Tempo
-      usperqnote=(event.v[0]<<16)|(event.v[1]<<8)|event.v[2];
-    } else {
-      if (rb_song_add_event(song,&event,track,chanv)<0) return -1;
-    }
+    if (rb_song_add_event(song,&event,track,chanv)<0) return -1;
     
     // We could leave it at that, but detecting back-to-back zero-time events is easy, so why not.
     while ((track->p<track->c)&&!track->v[track->p]) {
       track->p++;
       if ((err=rb_synth_event_decode_file(&event,track->v+track->p,track->c-track->p,&track->rstat))<=0) return -1;
       track->p+=err;
-      if ((event.opcode==0xff)&&(event.a==0x51)&&(event.c==3)) { // Set Tempo
-        usperqnote=(event.v[0]<<16)|(event.v[1]<<8)|event.v[2];
-      } else {
-        if (rb_song_add_event(song,&event,track,chanv)<0) return -1;
-      }
+      if (rb_song_add_event(song,&event,track,chanv)<0) return -1;
     }
   }
-  return usperqnote;
-}
-
-/* Given the output rate, tick rate, and tempo, how many frames per tick?
- */
- 
-static double rb_song_frames_per_tick(int ticksperqnote,int usperqnote,int rate) {
-  return ((double)rate*(double)usperqnote)/((double)ticksperqnote*1000000.0);
+  return 0;
 }
 
 /* Flatten tracks into a single command stream.
@@ -174,30 +170,26 @@ static double rb_song_frames_per_tick(int ticksperqnote,int usperqnote,int rate)
  
 static int rb_song_decode_tracks(
   struct rb_song *song,
-  struct rb_song_track *trackv,int trackc,
-  int ticksperqnote,int rate
+  struct rb_song_track *trackv,int trackc
 ) {
   uint8_t chanv[16]={0}; // programid by chid
-  int usperqnote=250000;
-  double framespertick=rb_song_frames_per_tick(ticksperqnote,usperqnote,rate);
   while (1) {
     int lodelay=rb_song_tracks_require_delay(trackv,trackc);
     if (lodelay<0) return -1;
     if (lodelay==INT_MAX) break;
     if (lodelay) {
-      if (rb_song_add_delay(song,lodelay,framespertick)<0) return -1;
+      if (rb_song_add_delay(song,lodelay)<0) return -1;
       if (rb_song_tracks_consume_delay(trackv,trackc,lodelay)<0) return -1;
     }
     int err=rb_song_decode_time_zero(song,trackv,trackc,chanv);
     if (err<0) return -1;
-    if (err&&(err!=usperqnote)) {
-      usperqnote=err;
-      framespertick=rb_song_frames_per_tick(ticksperqnote,usperqnote,rate);
-    }
   }
   
-  // Whatever the tempo is at the end, that's the global tempo for phase-reporting purposes.
-  if ((song->framesperqnote=(int)(framespertick*ticksperqnote))<0) song->framesperqnote=0;
+  // If tempo was unset, assume qnote=250ms
+  if (!song->uspertick) {
+    song->uspertick=250000/song->ticksperqnote;
+    if (song->uspertick<1) song->uspertick=1; // not actually possible, i think
+  }
   
   return 0;
 }
@@ -205,7 +197,7 @@ static int rb_song_decode_tracks(
 /* Dechunk input and pass forward with a track list.
  */
  
-static int rb_song_decode(struct rb_song *song,const uint8_t *src,int srcc,int rate) {
+static int rb_song_decode_midi(struct rb_song *song,const uint8_t *src,int srcc) {
 
   // Read the MThd and all MTrk chunks.
   struct rb_song_track trackv[RB_TRACK_LIMIT]={0};
@@ -244,23 +236,85 @@ static int rb_song_decode(struct rb_song *song,const uint8_t *src,int srcc,int r
   if (!division) return -1; // No MThd
   if (!trackc) return -1; // No MTrk
   
-  return rb_song_decode_tracks(song,trackv,trackc,division,rate);
+  song->ticksperqnote=division;
+  
+  return rb_song_decode_tracks(song,trackv,trackc);
 }
 
-/* New.
+/* New, MIDI.
  */
  
-struct rb_song *rb_song_new(const void *src,int srcc,int rate) {
-  if (!src||(srcc<0)||(rate<1)) return 0;
+struct rb_song *rb_song_from_midi(const void *src,int srcc) {
+  if (!src||(srcc<0)) return 0;
   struct rb_song *song=calloc(1,sizeof(struct rb_song));
   if (!song) return 0;
   
   song->refc=1;
   
-  if (rb_song_decode(song,src,srcc,rate)<0) {
+  if (rb_song_decode_midi(song,src,srcc)<0) {
     rb_song_del(song);
     return 0;
   }
+  
+  return song;
+}
+
+/* New, from our format.
+ */
+ 
+struct rb_song *rb_song_new(const void *src,int srcc) {
+  if (!src||(srcc<16)||memcmp(src,"r\xabSg",4)) return 0;
+  struct rb_song *song=calloc(1,sizeof(struct rb_song));
+  if (!song) return 0;
+  
+  song->refc=1;
+  
+  const uint8_t *SRC=src;
+  if (memcmp(SRC+8,"\0\0\0\0\0\0\0\0",8)) { // reserved, must be zero
+    rb_song_del(song);
+    return 0;
+  }
+  
+  song->uspertick=(SRC[4]<<8)|SRC[5];
+  song->ticksperqnote=(SRC[6]<<8)|SRC[7];
+  if (!song->uspertick||!song->ticksperqnote) {
+    rb_song_del(song);
+    return 0;
+  }
+  
+  int srcp=16;
+  int cmdc=(srcc-srcp)/2;
+  if (rb_song_cmdv_require(song,cmdc)<0) {
+    rb_song_del(song);
+    return 0;
+  }
+  
+  // Commands are already in the format we want. Just correct the byte order and ensure no reserved commands are used.
+  #if BYTE_ORDER==LITTLE_ENDIAN
+    {
+      uint8_t *dstbytes=(uint8_t*)(song->cmdv);
+      const uint8_t *srcbytes=SRC+srcp;
+      int i=cmdc;
+      for (;i-->0;dstbytes+=2,srcbytes+=2) {
+        if (srcbytes[0]&0x40) {
+          rb_song_del(song);
+          return 0;
+        }
+        dstbytes[0]=srcbytes[1];
+        dstbytes[1]=srcbytes[0];
+      }
+    }
+  #else
+    memcpy(song->cmdv,SRC+srcp,cmdc<<1);
+    const uint16_t *cmd=song->cmdv;
+    int i=cmdc; for (;i-->0;cmd++) {
+      if ((*cmd)&0x4000) {
+        rb_song_del(song);
+        return 0;
+      }
+    }
+  #endif
+  song->cmdc=cmdc;
   
   return song;
 }

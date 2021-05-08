@@ -12,6 +12,7 @@ int main(int argc,char **argv) {
     case RB_CLI_COMMAND_archive: err=rb_cli_main_archive(&cli); break;
     case RB_CLI_COMMAND_synthc: err=rb_cli_main_synthc(&cli); break;
     case RB_CLI_COMMAND_imagec: err=rb_cli_main_imagec(&cli); break;
+    case RB_CLI_COMMAND_songc: err=rb_cli_main_songc(&cli); break;
     
     default: rb_cli_print_usage(&cli); err=-1; break;
   }

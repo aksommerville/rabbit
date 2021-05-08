@@ -20,6 +20,7 @@ void rb_cli_print_usage(struct rb_cli *cli) {
     "  archive      Pack finished data files into one archive.\n"
     "  synthc       Compile one instrument or sound effect.\n"
     "  imagec       Convert one PNG file to our internal format.\n"
+    "  songc        Convert one MIDI file to our internal format.\n"
     "\n"
     "OPTIONS:\n"
     "  --audio=NAME    [%s] Audio driver.\n"
@@ -71,6 +72,7 @@ static int rb_cli_command_eval(const char *src) {
   _(archive)
   _(synthc)
   _(imagec)
+  _(songc)
   
   #undef _
   return -1;

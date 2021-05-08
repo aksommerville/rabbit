@@ -31,7 +31,7 @@ static int demo_vmgr_cb_res(uint32_t restype,int resid,const void *src,int srcc,
       
     case RB_RES_TYPE_song: {
         if (resid==1) {
-          struct rb_song *song=rb_song_new(src,srcc,rb_demo_synth->rate);
+          struct rb_song *song=rb_song_new(src,srcc);
           if (!song) return -1;
           if (rb_synth_play_song(rb_demo_synth,song,0)<0) return -1;
         }

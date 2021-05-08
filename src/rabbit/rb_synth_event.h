@@ -38,13 +38,12 @@ struct rb_song {
   int repeatp;
   uint16_t *cmdv;
   int cmdc,cmda;
-  int framesperqnote;
+  int uspertick;
+  int ticksperqnote;
 };
 
-/* Master rate is required to decode a song, and it becomes inextricably encoded in the song.
- * If you change rate, you must discard all songs are re-decode them.
- */
-struct rb_song *rb_song_new(const void *src,int srcc,int rate);
+struct rb_song *rb_song_new(const void *src,int srcc);
+struct rb_song *rb_song_from_midi(const void *src,int srcc);
 
 void rb_song_del(struct rb_song *song);
 int rb_song_ref(struct rb_song *song);
@@ -53,14 +52,16 @@ struct rb_song_player {
   struct rb_synth *synth;
   int refc;
   struct rb_song *song;
-  int repeat;
+  int repeat; // boolean, set directly
   int cmdp;
-  int delay; // consume this delay before reading (cmdp)
-  int elapsedframes; // after multiplier; probably not useful
-  int elapsedsourceframes; // before multiplier, so the song's natural beat
-  float tempomultiplier;
-  float invtempomultiplier;
-  int elapsedsourceframesnext;
+  int delay; // consume this delay before reading (cmdp), in output frames
+  float naturaltempo; // constant; derived from song and context
+  float tempoadjust; // Default 1, may vary. Longer is slower. Do not set directly.
+  float framespertick; // naturaltempo*tempoadjust
+  float ticksperframe; // 1/framespertick
+  int elapsedoutput; // Count of frames emitted.
+  int elapsedinput; // Count of ticks consumed from the song.
+  int elapsedinputnext; // (elapsedinput) snaps to this when delay reaches zero, to mitigate rounding error.
 };
 
 struct rb_song_player *rb_song_player_new(struct rb_synth *synth,struct rb_song *song);
@@ -79,5 +80,11 @@ int rb_song_player_update(struct rb_song_player *player);
 int rb_song_player_advance(struct rb_song_player *player,int framec);
 
 int rb_song_player_restart(struct rb_song_player *player);
+
+/* Set the absolute tempo adjustment (player->tempoadjust, which is read-only).
+ * 1 is the default, play at the natural tempo.
+ * 0.5 is twice as fast, 2.0 twice as slow, etc.
+ */
+int rb_song_player_adjust_tempo(struct rb_song_player *player,float adjust);
 
 #endif

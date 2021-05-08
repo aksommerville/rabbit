@@ -87,9 +87,10 @@ int rb_synth_silence(struct rb_synth *synth);
 int rb_synth_play_song(struct rb_synth *synth,struct rb_song *song,int restart);
 
 /* Support for rhythm games!
- * (*p) is filled with the song's current position in frames, before tempomultiplier if present.
- * (*c) is filled with the length of a qnote in frames, which for this to be useful must be constant.
+ * (*p) is filled with the song's current position in ticks.
+ * (*c) is filled with the length of a qnote in ticks, which is constant for a given song.
  * (c<1) if tempo not available, eg no song playing.
+ * A tick is 1/(1..65535) of a qnote, the song decides precisely. 24 and 120 are typical.
  * Beware that this is quantized to the update window, so don't expect perfection.
  */
 int rb_synth_get_song_phase(int *p,int *c,struct rb_synth *synth);
