@@ -24,10 +24,10 @@ static uint32_t rb_imagec_rdpx_rgba(const uint8_t *src) {
 }
 
 static void rb_imagec_wrpx_rgba(uint8_t *dst,uint32_t argb) {
-  dst[0]=argb>>24;
-  dst[1]=argb>>16;
-  dst[2]=argb>>8;
-  dst[3]=argb;
+  dst[0]=argb>>16;
+  dst[1]=argb>>8;
+  dst[2]=argb;
+  dst[3]=argb>>24;
 }
 
 static void rb_imagec_wrpx_rgb(uint8_t *dst,uint32_t argb) {
