@@ -187,7 +187,7 @@ static int rb_imagec(void *dstpp,const char *src,int srcc,struct rb_cli *cli) {
   }
   
   int dstc=4+dststride*png.h;
-  uint8_t *dst=malloc(dstc);
+  uint8_t *dst=calloc(1,dstc);
   if (!dst) {
     rb_png_image_cleanup(&png);
     return -1;
