@@ -76,7 +76,8 @@ int rb_song_player_update(struct rb_song_player *player) {
       if (player->repeat) {
         // When looping, always report at least one frame of delay.
         player->cmdp=player->song->repeatp;
-        //TODO maybe need to support restart points that don't align with qnotes
+        player->elapsedinput=0;
+        player->elapsedinputnext=0;
         return 1;
       }
       return 0;
