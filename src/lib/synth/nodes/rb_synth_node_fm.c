@@ -69,9 +69,79 @@ static int _rb_fm_config_ready(struct rb_synth_node_config *config) {
 /* Update.
  */
  
-static void _rb_fm_update_universal(struct rb_synth_node_runner *runner,int c) {
-  //TODO Just getting the algorithm right... Make a copy of this for each vector-vs-scalar case.
-  // ...it's *crazy* to do all these null checks every single frame!
+static void _rb_fm_update_ss(struct rb_synth_node_runner *runner,int c) {
+  rb_sample_t *main=RUNNER->mainv;
+  for (;c-->0;main++) {
+  
+    *main=sinf(RUNNER->carp); // SAMPLETYPE
+    
+    rb_sample_t cardp=RUNNER->ratek;
+    
+    rb_sample_t mod=sinf(RUNNER->modp); // SAMPLETYPE
+    rb_sample_t moddp=RCONFIG->mod0+cardp*RCONFIG->mod1;
+    RUNNER->modp+=moddp;
+    if (RUNNER->modp>=M_PI*2.0f) RUNNER->modp-=M_PI*2.0f;
+    mod*=RCONFIG->range;
+    
+    cardp=cardp+cardp*mod;
+    RUNNER->carp+=cardp;
+    if (RUNNER->carp>=M_PI*2.0f) RUNNER->carp-=M_PI*2.0f;
+    else if (RUNNER->carp<0.0f) RUNNER->carp+=M_PI*2.0f;
+  }
+}
+ 
+static void _rb_fm_update_sv(struct rb_synth_node_runner *runner,int c) {
+  rb_sample_t *main=RUNNER->mainv;
+  rb_sample_t *range=RUNNER->rangev;
+  for (;c-->0;main++) {
+  
+    *main=sinf(RUNNER->carp); // SAMPLETYPE
+    
+    rb_sample_t cardp=RUNNER->ratek;
+    
+    rb_sample_t mod=sinf(RUNNER->modp); // SAMPLETYPE
+    rb_sample_t moddp=RCONFIG->mod0+cardp*RCONFIG->mod1;
+    RUNNER->modp+=moddp;
+    if (RUNNER->modp>=M_PI*2.0f) RUNNER->modp-=M_PI*2.0f;
+    mod*=(*range);
+    
+    cardp=cardp+cardp*mod;
+    RUNNER->carp+=cardp;
+    if (RUNNER->carp>=M_PI*2.0f) RUNNER->carp-=M_PI*2.0f;
+    else if (RUNNER->carp<0.0f) RUNNER->carp+=M_PI*2.0f;
+  
+    range++;
+  }
+}
+ 
+static void _rb_fm_update_vs(struct rb_synth_node_runner *runner,int c) {
+  rb_sample_t *main=RUNNER->mainv;
+  rb_sample_t *rate=RUNNER->ratev;
+  for (;c-->0;main++) {
+  
+    *main=sinf(RUNNER->carp); // SAMPLETYPE
+    
+    rb_sample_t cardp=RUNNER->ratek;
+    cardp=((*rate)*M_PI*2.0f)/runner->config->synth->rate;
+    if (cardp<0.0f) cardp=0.0f;
+    else if (cardp>M_PI*2.0f) cardp=0.0f;
+    
+    rb_sample_t mod=sinf(RUNNER->modp); // SAMPLETYPE
+    rb_sample_t moddp=RCONFIG->mod0+cardp*RCONFIG->mod1;
+    RUNNER->modp+=moddp;
+    if (RUNNER->modp>=M_PI*2.0f) RUNNER->modp-=M_PI*2.0f;
+    mod*=RCONFIG->range;
+    
+    cardp=cardp+cardp*mod;
+    RUNNER->carp+=cardp;
+    if (RUNNER->carp>=M_PI*2.0f) RUNNER->carp-=M_PI*2.0f;
+    else if (RUNNER->carp<0.0f) RUNNER->carp+=M_PI*2.0f;
+  
+    rate++;
+  }
+}
+ 
+static void _rb_fm_update_vv(struct rb_synth_node_runner *runner,int c) {
   rb_sample_t *main=RUNNER->mainv;
   rb_sample_t *rate=RUNNER->ratev;
   rb_sample_t *range=RUNNER->rangev;
@@ -80,29 +150,23 @@ static void _rb_fm_update_universal(struct rb_synth_node_runner *runner,int c) {
     *main=sinf(RUNNER->carp); // SAMPLETYPE
     
     rb_sample_t cardp=RUNNER->ratek;
-    if (rate) {
-      cardp=((*rate)*M_PI*2.0f)/runner->config->synth->rate;
-      if (cardp<0.0f) cardp=0.0f;
-      else if (cardp>M_PI*2.0f) cardp=0.0f;
-    }
+    cardp=((*rate)*M_PI*2.0f)/runner->config->synth->rate;
+    if (cardp<0.0f) cardp=0.0f;
+    else if (cardp>M_PI*2.0f) cardp=0.0f;
     
     rb_sample_t mod=sinf(RUNNER->modp); // SAMPLETYPE
     rb_sample_t moddp=RCONFIG->mod0+cardp*RCONFIG->mod1;
     RUNNER->modp+=moddp;
     if (RUNNER->modp>=M_PI*2.0f) RUNNER->modp-=M_PI*2.0f;
-    if (range) {
-      mod*=(*range);
-    } else {
-      mod*=RCONFIG->range;
-    }
+    mod*=(*range);
     
     cardp=cardp+cardp*mod;
     RUNNER->carp+=cardp;
     if (RUNNER->carp>=M_PI*2.0f) RUNNER->carp-=M_PI*2.0f;
     else if (RUNNER->carp<0.0f) RUNNER->carp+=M_PI*2.0f;
   
-    if (rate) rate++;
-    if (range) range++;
+    rate++;
+    range++;
   }
 }
 
@@ -121,8 +185,14 @@ static int _rb_fm_runner_init(struct rb_synth_node_runner *runner,uint8_t noteid
   RUNNER->ratek=fmodf(RUNNER->ratek,M_PI*2.0f); // SAMPLETYPE
   if (RUNNER->ratek<0.0f) RUNNER->ratek+=M_PI*2.0f;
   
-  //TODO optimized update cases
-  runner->update=_rb_fm_update_universal;
+  if (RUNNER->ratev) {
+    if (RUNNER->rangev) runner->update=_rb_fm_update_vv;
+    else runner->update=_rb_fm_update_vs;
+  } else {
+    if (RUNNER->rangev) runner->update=_rb_fm_update_sv;
+    else runner->update=_rb_fm_update_ss;
+  }
+  
   return 0;
 }
 

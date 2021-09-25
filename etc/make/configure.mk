@@ -7,7 +7,6 @@ ifeq ($(UNAMEN),raspberrypi)
 
 RPIINC:=-I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
 RPILIB:=-L/opt/vc/lib -lbcm_host 
-#-lGLESv2 -lEGL 
 
 CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit -DRB_ARCH=RB_ARCH_raspi $(RPIINC)
 LD:=gcc
@@ -20,10 +19,10 @@ else
 
 CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit -DRB_ARCH=RB_ARCH_linux
 LD:=gcc
-LDPOST:=-lz -lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lpthread
+LDPOST:=-lz -lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lasound -lpthread
 AR:=ar rc
 
-OPT_ENABLE:=evdev glx pulse
+OPT_ENABLE:=evdev glx pulse alsa
 
 endif
 else ifeq ($(UNAMES),Darwin)

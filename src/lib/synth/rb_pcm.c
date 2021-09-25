@@ -83,7 +83,7 @@ struct rb_pcmprint *rb_pcmprint_new(
   
   // We need to supply an unchanging buffer to the node runner.
   // So we can't grow the buffer to suit update lengths.
-  // Kind of of bummer.
+  // Kind of a bummer.
   pcmprint->bufa=1024;
   if (!(pcmprint->buf=malloc(sizeof(rb_sample_t)*pcmprint->bufa))) {
     rb_pcmprint_del(pcmprint);

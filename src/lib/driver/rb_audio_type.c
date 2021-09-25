@@ -8,11 +8,11 @@ extern const struct rb_audio_type rb_audio_type_pulse;
 extern const struct rb_audio_type rb_audio_type_alsa;
  
 static const struct rb_audio_type *rb_audio_typev[]={
-#if RB_USE_pulse
-  &rb_audio_type_pulse,
-#endif
 #if RB_USE_alsa
   &rb_audio_type_alsa,
+#endif
+#if RB_USE_pulse
+  &rb_audio_type_pulse,
 #endif
 };
 
