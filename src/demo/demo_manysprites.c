@@ -11,7 +11,7 @@
 
 //#define OVERRIDE_ALPHAMODE RB_ALPHAMODE_OPAQUE
 
-#define spritec 1000
+#define spritec 100
 static struct sprite {
   int x,y; // top left
   int dx,dy;

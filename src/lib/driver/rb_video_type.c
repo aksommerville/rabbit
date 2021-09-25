@@ -5,10 +5,14 @@
  */
  
 extern const struct rb_video_type rb_video_type_glx;
+extern const struct rb_video_type rb_video_type_bcm;
  
 static const struct rb_video_type *rb_video_typev[]={
 #if RB_USE_glx
   &rb_video_type_glx,
+#endif
+#if RB_USE_bcm
+  &rb_video_type_bcm,
 #endif
 };
 
