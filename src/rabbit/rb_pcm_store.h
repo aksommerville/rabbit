@@ -44,7 +44,7 @@ static inline uint16_t rb_pcm_store_generate_key(uint8_t programid,uint8_t notei
  * 'add' is not guaranteed to actually store the pcm.
  * You can add a pcm to replace an existing one (but i think that's not the general design).
  */
-struct rb_pcm *rb_pcm_store_get(const struct rb_pcm_store *store,uint16_t key);
+struct rb_pcm *rb_pcm_store_get(struct rb_pcm_store *store,uint16_t key);
 int rb_pcm_store_add(struct rb_pcm_store *store,uint16_t key,struct rb_pcm *pcm);
 
 /* Direct cache access, probably only useful internally.
@@ -53,5 +53,9 @@ int rb_pcm_store_add(struct rb_pcm_store *store,uint16_t key,struct rb_pcm *pcm)
 int rb_pcm_store_search(const struct rb_pcm_store *store,uint16_t key);
 int rb_pcm_store_insert(struct rb_pcm_store *store,int p,uint16_t key,struct rb_pcm *pcm);
 int rb_pcm_store_remove(struct rb_pcm_store *store,int p,int c);
+
+/* Main synth will call this when it finishes printing a PCM, to have it persisted to disk.
+ */
+int rb_pcm_store_persist(struct rb_pcm_store *store,uint16_t key,struct rb_pcm *pcm);
 
 #endif

@@ -44,4 +44,9 @@ int rb_dir_read(
  */
 char rb_file_get_type(const char *path);
 
+/* (path) names a regular file.
+ * We'll work backward to ensure its parent directory exist.
+ */
+int rb_mkdir_for_file(const char *path);
+
 #endif

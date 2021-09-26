@@ -68,6 +68,9 @@ int rb_pcmrun_update(int16_t *v,int c,struct rb_pcmrun *pcmrun) {
 
 /* New printer.
  */
+ 
+static int rb_pcm_total=0;
+static int rb_pcm_count=0;
 
 struct rb_pcmprint *rb_pcmprint_new(
   struct rb_synth_node_config *config,
@@ -108,6 +111,12 @@ struct rb_pcmprint *rb_pcmprint_new(
     rb_pcmprint_del(pcmprint);
     return 0;
   }
+  
+  /**
+  rb_pcm_total+=samplec;
+  rb_pcm_count++;
+  fprintf(stderr,"PCM %d, count=%d, total=%d\n",samplec,rb_pcm_count,rb_pcm_total);
+  /**/
   
   return pcmprint;
 }

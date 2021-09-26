@@ -42,6 +42,12 @@ struct rb_synth {
    */
   void *userdata;
   int (*cb_play_note)(struct rb_synth *synth,uint8_t programid,uint8_t noteid); // 0 to suppress, 1 to proceed
+  
+  /* If set, this is a directory where we will cache printed PCM.
+   * Beware, you have to flush it manually if you change an instrument.
+   * TODO If this works clean it up.
+   */
+  const char *cachedir;
 };
 
 /* (rate) in Hertz, must match the driver.

@@ -50,6 +50,7 @@ struct rb_pcmprint {
   rb_sample_t *buf;
   int bufa;
   int16_t qlevel;
+  uint16_t key;
 };
 
 struct rb_pcmprint *rb_pcmprint_new(

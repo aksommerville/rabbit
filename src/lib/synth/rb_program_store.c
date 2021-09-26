@@ -177,6 +177,7 @@ int rb_program_store_get_note(
   // Make a PCM printer -- it takes care of instantiating the node.
   struct rb_pcmprint *pcmprint=rb_pcmprint_new(entry->config,noteid);
   if (!pcmprint) return -1;
+  pcmprint->key=key;
   
   // Let the PCM store consider adding it.
   // Ignore errors.

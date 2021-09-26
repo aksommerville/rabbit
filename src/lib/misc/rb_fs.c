@@ -1,6 +1,7 @@
 #include "rabbit/rb_internal.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -177,4 +178,27 @@ char rb_file_get_type(const char *path) {
   if (S_ISLNK(st.st_mode)) return 'l'; // shouldn't happen; this is plain 'stat'
   if (S_ISSOCK(st.st_mode)) return 's';
   return '?';
+}
+
+/* Recursive mkdir from a leaf path.
+ */
+ 
+int rb_mkdir_for_file(const char *path) {
+  if (!path) return 0;
+  int pathc=0,slashp=-1;
+  while (path[pathc]) {
+    if (path[pathc]=='/') slashp=pathc;
+    pathc++;
+  }
+  if (slashp<0) return 0;
+  char subpath[1024];
+  if (slashp>=sizeof(subpath)) return -1;
+  memcpy(subpath,path,slashp);
+  subpath[slashp]=0;
+  
+  if (mkdir(subpath,0777)>=0) return 0;
+  if (errno!=ENOENT) return -1;
+  if (rb_mkdir_for_file(subpath)<0) return -1;
+  if (mkdir(subpath,0777)>=0) return 0;
+  return -1;
 }

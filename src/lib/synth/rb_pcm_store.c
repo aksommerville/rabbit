@@ -1,6 +1,8 @@
 #include "rabbit/rb_internal.h"
 #include "rabbit/rb_pcm_store.h"
 #include "rabbit/rb_pcm.h"
+#include "rabbit/rb_synth.h"
+#include "rabbit/rb_fs.h"
 
 /* New.
  */
@@ -113,12 +115,63 @@ static int rb_pcm_store_check_eviction(struct rb_pcm_store *store) {
   return 0;
 }
 
+/* Write to the persistent cache if applicable.
+ */
+ 
+int rb_pcm_store_persist(struct rb_pcm_store *store,uint16_t key,struct rb_pcm *pcm) {
+  if (!key||!pcm||!pcm->c) return 0;
+  const char *root=store->synth->cachedir;
+  if (!root||!root[0]) return 0;
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/%d/%d",root,store->synth->rate,key);
+  if ((pathc<1)||(pathc>=sizeof(path))) return 0;
+  rb_mkdir_for_file(path);
+  if (rb_file_write(path,pcm->v,pcm->c<<1)<0) return -1;
+  //fprintf(stderr,"%s: persisted pcm\n",path);
+  return 0;
+}
+
+/* If a persistent cache is in play, look for one PCM there.
+ * If found, read it, add to the local cache, and return a WEAK reference.
+ */
+ 
+static struct rb_pcm *rb_pcm_store_check_persistent_cache(struct rb_pcm_store *store,uint16_t key) {
+  const char *root=store->synth->cachedir;
+  if (!root||!root[0]) return 0;
+  char path[1024];
+  int pathc=snprintf(path,sizeof(path),"%s/%d/%d",root,store->synth->rate,key);
+  if ((pathc<1)||(pathc>=sizeof(path))) return 0;
+  void *serial=0;
+  int serialc=rb_file_read(&serial,path);
+  if (!serial||(serialc<0)||(serialc&1)) return 0;
+  
+  struct rb_pcm *pcm=rb_pcm_new(serialc>>1);
+  if (!pcm) {
+    free(serial);
+    return 0;
+  }
+  memcpy(pcm->v,serial,serialc);
+  
+  int p=rb_pcm_store_search(store,key);
+  if (p>=0) { // the hell?
+    rb_pcm_del(pcm);
+    return 0;
+  }
+  p=-p-1;
+  int err=rb_pcm_store_insert(store,p,key,pcm);
+  rb_pcm_del(pcm);
+  if (err<0) return 0;
+  
+  //fprintf(stderr,"%s: got pcm from persistent cache\n",path);
+  return pcm;
+}
+
 /* Get PCM from cache.
  */
  
-struct rb_pcm *rb_pcm_store_get(const struct rb_pcm_store *store,uint16_t key) {
+struct rb_pcm *rb_pcm_store_get(struct rb_pcm_store *store,uint16_t key) {
   int p=rb_pcm_store_search(store,key);
-  if (p<0) return 0;
+  if (p<0) return rb_pcm_store_check_persistent_cache(store,key);
   return store->entryv[p].pcm;
 }
 

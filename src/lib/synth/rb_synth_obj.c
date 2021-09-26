@@ -125,6 +125,7 @@ static int rb_synth_update_pcmprint(struct rb_synth *synth,int framec) {
     int err=rb_pcmprint_update(pcmprint,framec);
     if (err<0) return -1; // Should be rare, and must be serious.
     if (!err) {
+      rb_pcm_store_persist(synth->pcm_store,pcmprint->key,pcmprint->pcm);
       rb_pcmprint_del(pcmprint);
       synth->pcmprintc--;
       memmove(synth->pcmprintv+i,synth->pcmprintv+i+1,sizeof(void*)*(synth->pcmprintc-i));
