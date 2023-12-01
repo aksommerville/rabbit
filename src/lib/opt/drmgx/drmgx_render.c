@@ -187,9 +187,9 @@ static void drmgx_fbcvt_RGB_TINY16(uint8_t *dst,const uint8_t *src,int w,int h) 
 static void drmgx_fbcvt_RGB_RGBX(uint8_t *dst,const uint32_t *src,int w,int h) {
   int pxc=w*h;
   for (;pxc-->0;dst+=3,src++) {
-    dst[0]=(*src);
+    dst[0]=(*src)>>16;
     dst[1]=(*src)>>8;
-    dst[2]=(*src)>>16;
+    dst[2]=(*src);
   }
 }
 
