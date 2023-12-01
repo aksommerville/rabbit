@@ -16,6 +16,7 @@ struct rb_audio_delegate {
   void *userdata;
   int rate; // Output rate in Hz -- driver may change during init.
   int chanc; // Channel count, 1 or 2 -- driver may change during init.
+  const char *device;
   int (*cb_pcm_out)(int16_t *v,int c,struct rb_audio *audio);
 };
  

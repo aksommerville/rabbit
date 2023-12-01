@@ -88,8 +88,10 @@ static void *rb_alsa_iothd(void *dummy) {
 
 static int _rb_alsa_init(struct rb_audio *audio) {
   
+  const char *device=audio->delegate.device;
+  if (!device||!device[0]) device="default";
   if (
-    (snd_pcm_open(&AUDIO->alsa,"default",SND_PCM_STREAM_PLAYBACK,0)<0)||
+    (snd_pcm_open(&AUDIO->alsa,device,SND_PCM_STREAM_PLAYBACK,0)<0)||
     (snd_pcm_hw_params_malloc(&AUDIO->hwparams)<0)||
     (snd_pcm_hw_params_any(AUDIO->alsa,AUDIO->hwparams)<0)||
     (snd_pcm_hw_params_set_access(AUDIO->alsa,AUDIO->hwparams,SND_PCM_ACCESS_RW_INTERLEAVED)<0)||
