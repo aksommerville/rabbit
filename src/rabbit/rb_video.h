@@ -20,6 +20,7 @@ struct rb_video_delegate {
   int winw,winh;
   int fullscreen;
   const char *title;
+  const char *device;
   
 // Callbacks. Implementation might not use them at all:
   int (*cb_close)(struct rb_video *video);

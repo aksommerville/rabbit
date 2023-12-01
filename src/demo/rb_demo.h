@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RB_DEFAULT_DEMO_NAME "multimidfile"
+#define RB_DEFAULT_DEMO_NAME "lights"
 
 #define RB_FOR_EACH_DEMO \
   _(manysprites) \

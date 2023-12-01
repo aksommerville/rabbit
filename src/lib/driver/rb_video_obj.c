@@ -10,7 +10,12 @@ struct rb_video *rb_video_new(
   const struct rb_video_delegate *delegate
 ) {
   if (!type) {
-    if (!(type=rb_video_type_by_index(0))) return 0;
+    int p=0; for (;;p++) {
+      if (!(type=rb_video_type_by_index(p))) return 0;
+      struct rb_video *video=rb_video_new(type,delegate);
+      if (video) return video;
+    }
+    return 0;
   }
   
   struct rb_video *video=0;

@@ -17,12 +17,12 @@ OPT_ENABLE:=evdev alsa bcm
 
 else
 
-CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit -DRB_ARCH=RB_ARCH_linux
+CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit -DRB_ARCH=RB_ARCH_linux -I/usr/include/libdrm
 LD:=gcc
-LDPOST:=-lz -lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lasound -lpthread
+LDPOST:=-lz -lX11 -lGLX -lGL -lm -lpulse -lpulse-simple -lasound -lpthread -ldrm -lgbm -lEGL
 AR:=ar rc
 
-OPT_ENABLE:=evdev glx pulse alsa
+OPT_ENABLE:=evdev glx drmgx pulse alsa
 
 endif
 else ifeq ($(UNAMES),Darwin)
