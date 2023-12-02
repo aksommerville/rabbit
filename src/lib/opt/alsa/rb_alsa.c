@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <alsa/asoundlib.h>
 
-#define RB_ALSA_BUFFER_SIZE 1024
+#define RB_ALSA_BUFFER_SIZE 2048
 
 /* Instance
  */

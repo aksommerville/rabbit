@@ -1,9 +1,19 @@
-UNAMES:=$(shell uname -s)
+UNAMESNM:=$(shell uname -snm)
 
-ifeq ($(UNAMES),Linux)
+ifneq (,$(strip $(filter Linux,$(UNAMESNM))))
 
-UNAMEN:=$(shell uname -n)
-ifeq ($(UNAMEN),raspberrypi)
+ifneq (,$(strip $(filter raspberrypi,$(UNAMESNM))))
+
+ifneq (,$(strip $(filter aarch64,$(UNAMESNM)))) # pi 4: drmgx,alsa
+
+CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit -DRB_ARCH=RB_ARCH_linux -I/usr/include/libdrm
+LD:=gcc
+LDPOST:=-lz -lm -lasound -lpthread -ldrm -lgbm -lEGL -lGLESv2
+AR:=ar rc
+
+OPT_ENABLE:=evdev drmgx alsa
+
+else # pi 1: bcm,alsa
 
 RPIINC:=-I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
 RPILIB:=-L/opt/vc/lib -lbcm_host 
@@ -15,7 +25,8 @@ AR:=ar rc
 
 OPT_ENABLE:=evdev alsa bcm
 
-else
+endif
+else # general linux: glx,drmgx,alsa,pulse
 
 CC:=gcc -c -MMD -O2 -Isrc -Imid -Werror -Wimplicit -DRB_ARCH=RB_ARCH_linux -I/usr/include/libdrm
 LD:=gcc
