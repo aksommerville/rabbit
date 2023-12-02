@@ -127,7 +127,7 @@ static struct rb_inmap_template *rb_inmap_store_decode_header(
   tokenc=0;
   while ((srcp<srcc)&&((unsigned char)src[srcp]>0x20)) { srcp++; tokenc++; }
   while ((srcp<srcc)&&((unsigned char)src[srcp]<=0x20)) srcp++;
-  if (rb_int_eval(&vid,src+srcp,srcc-srcp)<0) return 0;
+  if (rb_int_eval(&vid,token,tokenc)<0) return 0;
   if (vid&~0xffff) return 0;
   
   // pid
@@ -136,7 +136,7 @@ static struct rb_inmap_template *rb_inmap_store_decode_header(
   tokenc=0;
   while ((srcp<srcc)&&((unsigned char)src[srcp]>0x20)) { srcp++; tokenc++; }
   while ((srcp<srcc)&&((unsigned char)src[srcp]<=0x20)) srcp++;
-  if (rb_int_eval(&pid,src+srcp,srcc-srcp)<0) return 0;
+  if (rb_int_eval(&pid,token,tokenc)<0) return 0;
   if (vid&~0xffff) return 0;
   
   // name

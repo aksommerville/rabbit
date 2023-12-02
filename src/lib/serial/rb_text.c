@@ -11,8 +11,11 @@ static int rb_pattern_match_inner(
   int patp=0,srcp=0;
   while (1) {
   
-    // Termination of (pat) is a mismatch.
-    if (patp>=patc) return 0;
+    // Termination of (pat) is a mismatch, unless (src) is also terminated.
+    if (patp>=patc) {
+      if (srcp>=srcc) return 1;
+      return 0;
+    }
     
     // '*' matches any amount of anything, even when (src) exhausted.
     if (pat[patp]=='*') {
